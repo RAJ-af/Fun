@@ -1,18 +1,16 @@
 package com.itsraj.funkytalk.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,20 +20,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.navigation.Screen
+import com.itsraj.funkytalk.viewmodel.AuthState
+import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.background,
-            MaterialTheme.colorScheme.surface
-        )
-    )
+    val authState by authViewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Login.route) { inclusive = true }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -43,7 +46,7 @@ fun LoginScreen(navController: NavController) {
                 title = { Text("Login") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -97,19 +100,33 @@ fun LoginScreen(navController: NavController) {
                 }
             )
 
+            if (authState is AuthState.Error) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = (authState as AuthState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { /* Handle Login with Firebase */ },
+                onClick = { authViewModel.login(email, password) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                enabled = authState !is AuthState.Loading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Login", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                if (authState is AuthState.Loading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Login", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

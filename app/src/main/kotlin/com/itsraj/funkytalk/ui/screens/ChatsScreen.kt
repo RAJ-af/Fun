@@ -21,8 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import com.itsraj.funkytalk.ui.navigation.Screen
 
 data class ChatSummary(
     val id: String,
@@ -104,8 +103,7 @@ fun ChatsScreen(navController: NavController) {
 fun ChatRow(chat: ChatSummary, navController: NavController) {
     Surface(
         onClick = {
-            val encodedUrl = URLEncoder.encode(chat.photoUrl, StandardCharsets.UTF_8.toString())
-            navController.navigate("chat_detail/${chat.name}/$encodedUrl")
+            navController.navigate(Screen.ChatDetail.createRoute(chat.name, chat.photoUrl))
         },
         color = Color.Transparent,
         modifier = Modifier.fillMaxWidth()

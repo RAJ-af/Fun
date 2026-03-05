@@ -12,21 +12,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.ui.navigation.Screen
+import com.itsraj.funkytalk.viewmodel.AuthState
+import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileSetupScreen(navController: NavController) {
+fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewModel) {
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
     var nativeLanguage by remember { mutableStateOf("") }
     var learningLanguage by remember { mutableStateOf("") }
+
+    val authState by authViewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.ProfileSetup.route) { inclusive = true }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -115,16 +127,44 @@ fun ProfileSetupScreen(navController: NavController) {
                 shape = RoundedCornerShape(12.dp)
             )
 
+            if (authState is AuthState.Error) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = (authState as AuthState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { /* Save to Firestore */ navController.navigate(Screen.Home.route) },
+                onClick = {
+                    val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    if (user != null) {
+                        val profile = UserProfile(
+                            uid = user.uid,
+                            name = name,
+                            email = user.email ?: "",
+                            age = age.toIntOrNull() ?: 0,
+                            nativeLanguage = nativeLanguage,
+                            learningLanguage = learningLanguage,
+                            bio = bio
+                        )
+                        authViewModel.saveProfile(profile)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                enabled = authState !is AuthState.Loading,
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Complete Setup", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                if (authState is AuthState.Loading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Complete Setup", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
             }
         }
     }

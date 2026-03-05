@@ -64,13 +64,13 @@ fun FunkyNavHost(
             WelcomeScreen(navController = navController)
         }
         composable(Screen.Login.route) {
-            LoginScreen(navController = navController)
+            LoginScreen(navController = navController, authViewModel = authViewModel)
         }
         composable(Screen.Signup.route) {
-            SignupScreen(navController = navController)
+            SignupScreen(navController = navController, authViewModel = authViewModel)
         }
         composable(Screen.ProfileSetup.route) {
-            ProfileSetupScreen(navController = navController)
+            ProfileSetupScreen(navController = navController, authViewModel = authViewModel)
         }
 
         composable(Screen.Privacy.route) { PlaceholderScreen("Privacy") }
@@ -84,7 +84,7 @@ fun FunkyNavHost(
         composable(Screen.Profile.route) { ProfileScreen() }
 
         // Details
-        composable("chat_detail/{userName}/{photoUrl}") { backStackEntry ->
+        composable(Screen.ChatDetail.route) { backStackEntry ->
             val userName = backStackEntry.arguments?.getString("userName") ?: "User"
             val photoUrl = backStackEntry.arguments?.getString("photoUrl") ?: ""
             IndividualChatScreen(navController, userName, photoUrl)
