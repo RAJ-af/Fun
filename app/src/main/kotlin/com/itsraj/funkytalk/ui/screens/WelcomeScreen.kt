@@ -12,9 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -22,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.navigation.Screen
-import com.itsraj.funkytalk.ui.theme.BackgroundGradient
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -47,7 +44,7 @@ fun WelcomeScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.radialGradient(BackgroundGradient))
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -60,9 +57,9 @@ fun WelcomeScreen(navController: NavController) {
             Text(
                 text = "FunkyTalk",
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White.copy(alpha = 0.8f),
-                    letterSpacing = 2.sp
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black.copy(alpha = 0.8f),
+                    letterSpacing = 1.sp
                 ),
                 modifier = Modifier.padding(top = 24.dp)
             )
@@ -77,10 +74,10 @@ fun WelcomeScreen(navController: NavController) {
                 Text(
                     text = quote,
                     style = MaterialTheme.typography.displaySmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        lineHeight = 52.sp,
-                        letterSpacing = (-1).sp
+                        fontWeight = FontWeight.Black,
+                        color = Color.Black,
+                        lineHeight = 48.sp,
+                        letterSpacing = (-1.5).sp
                     ),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 8.dp)

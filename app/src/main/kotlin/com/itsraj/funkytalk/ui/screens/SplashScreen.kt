@@ -9,14 +9,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.navigation.Screen
-import com.itsraj.funkytalk.ui.theme.BackgroundGradient
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
@@ -59,16 +57,16 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.radialGradient(BackgroundGradient)),
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "FunkyTalk",
             style = MaterialTheme.typography.displayLarge.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                fontSize = 56.sp,
-                letterSpacing = 4.sp
+                fontWeight = FontWeight.Black,
+                color = Color.Black,
+                fontSize = 52.sp,
+                letterSpacing = (-1).sp
             ),
             modifier = Modifier.alpha(alphaAnim.value)
         )

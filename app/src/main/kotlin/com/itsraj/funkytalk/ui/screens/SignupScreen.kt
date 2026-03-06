@@ -3,19 +3,16 @@ package com.itsraj.funkytalk.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -27,9 +24,6 @@ import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
 import com.itsraj.funkytalk.ui.navigation.Screen
-import com.itsraj.funkytalk.ui.theme.BackgroundGradient
-import com.itsraj.funkytalk.ui.theme.GradientPinkPurple
-import com.itsraj.funkytalk.ui.theme.GradientPurpleBlue
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
@@ -53,7 +47,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.radialGradient(BackgroundGradient))
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -68,7 +62,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
                 }
             }
 
@@ -77,8 +71,8 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
             Text(
                 text = "Join FunkyTalk",
                 style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black,
                     letterSpacing = (-1).sp
                 ),
                 modifier = Modifier.align(Alignment.Start).padding(horizontal = 8.dp)
@@ -91,7 +85,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
                 onValueChange = { email = it },
                 label = "Email",
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email),
-                trailingIcon = { Icon(Icons.Outlined.Email, null, tint = Color.White.copy(alpha = 0.4f)) }
+                trailingIcon = { Icon(Icons.Outlined.Email, null, tint = Color.Black.copy(alpha = 0.4f)) }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -104,7 +98,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = null, tint = Color.White.copy(alpha = 0.4f))
+                        Icon(imageVector = image, contentDescription = null, tint = Color.Black.copy(alpha = 0.4f))
                     }
                 }
             )
@@ -122,7 +116,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = (authState as AuthState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
+                    color = Color.Red,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -138,7 +132,6 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                gradient = GradientPurpleBlue,
                 enabled = authState !is AuthState.Loading
             )
 
@@ -148,7 +141,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
                 Text(
                     "By signing up, you agree to our Privacy Policy",
                     fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = Color.Black.copy(alpha = 0.5f),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
@@ -156,7 +149,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
             Spacer(modifier = Modifier.height(16.dp))
 
             TextButton(onClick = { navController.navigate(Screen.Login.route) }) {
-                Text("Already have an account? Login", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text("Already have an account? Login", color = Color.Black, fontWeight = FontWeight.Bold)
             }
         }
     }
