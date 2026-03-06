@@ -54,7 +54,7 @@ fun PremiumButton(
             color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f),
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp)
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 24.dp)
         )
     }
 }
@@ -74,16 +74,16 @@ fun PremiumTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
-        label = { Text(label) },
+        label = { Text(label, fontWeight = FontWeight.Medium) },
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         trailingIcon = trailingIcon,
         shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color.Black.copy(alpha = 0.3f),
+            unfocusedBorderColor = Color.Black.copy(alpha = 0.15f),
             focusedLabelColor = Color.Black,
-            unfocusedLabelColor = Color.Black.copy(alpha = 0.5f),
+            unfocusedLabelColor = Color.Black.copy(alpha = 0.4f),
             cursorColor = Color.Black,
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White
@@ -100,7 +100,7 @@ fun PremiumCard(
     Surface(
         modifier = modifier
             .shadow(
-                elevation = 4.dp,
+                elevation = 6.dp,
                 shape = RoundedCornerShape(24.dp),
                 ambientColor = Color.Black.copy(alpha = 0.1f)
             ),
@@ -109,7 +109,7 @@ fun PremiumCard(
         border = BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f))
     ) {
         Column(
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier.padding(24.dp)
         ) {
             content()
         }

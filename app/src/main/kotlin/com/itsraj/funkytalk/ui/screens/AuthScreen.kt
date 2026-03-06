@@ -5,10 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Visibility
@@ -17,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,6 +33,7 @@ import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
 import com.itsraj.funkytalk.ui.navigation.Screen
+import com.itsraj.funkytalk.ui.theme.MangoYellow
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
@@ -38,7 +42,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isEmailMode by remember { mutableStateOf(false) }
+    var isLoginMode by remember { mutableStateOf(false) }
 
     val authState by authViewModel.authState.collectAsState()
 
@@ -58,6 +62,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .statusBarsPadding()
     ) {
         DecorativeBackground()
 
@@ -67,59 +72,55 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Center
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    if (isEmailMode) isEmailMode = false else navController.popBackStack()
-                }) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = if (!isEmailMode) "Speak to the\nworld." else "Welcome\nBack.",
-                style = MaterialTheme.typography.displayMedium.copy(
-                    fontWeight = FontWeight.Black,
-                    color = Color.Black,
-                    lineHeight = 52.sp,
-                    letterSpacing = (-2).sp
-                ),
-                modifier = Modifier.align(Alignment.Start).padding(horizontal = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            if (!isEmailMode) {
-                AuthMethodCard(
-                    text = "Continue with Email",
-                    icon = Icons.Outlined.Email,
-                    onClick = { isEmailMode = true }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (isLoginMode) "Welcome back," else "Create an account",
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Black,
+                        color = Color.Black,
+                        letterSpacing = (-1.5).sp
+                    ),
+                    modifier = Modifier.align(Alignment.Start)
                 )
-
-                Spacer(modifier = Modifier.height(48.dp))
 
                 Text(
-                    "By continuing, you agree to our Terms of Service.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Black.copy(alpha = 0.4f),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    text = if (isLoginMode) "We happy to see you here again. Enter your email address and password"
+                          else "Create your account, it takes less than a minute. Enter your email and password",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color.Black.copy(alpha = 0.5f),
+                        lineHeight = 22.sp
+                    ),
+                    modifier = Modifier.align(Alignment.Start).padding(top = 8.dp)
                 )
-            } else {
+
+                Spacer(modifier = Modifier.height(32.dp))
+
                 PremiumTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = "Email",
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email),
-                    trailingIcon = { Icon(Icons.Outlined.Email, null, tint = Color.Black.copy(alpha = 0.4f)) }
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 PremiumTextField(
                     value = password,
@@ -135,35 +136,82 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
 
                 if (authState is AuthState.Error) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = (authState as AuthState.Error).message,
                         color = Color.Red,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 PremiumButton(
-                    text = "Continue",
+                    text = if (isLoginMode) "Log In" else "Create an Account",
                     onClick = {
-                        authViewModel.login(email, password)
+                        if (isLoginMode) authViewModel.login(email, password)
+                        else authViewModel.signup(email, password)
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
                     enabled = authState !is AuthState.Loading && email.isNotBlank() && password.length >= 6
                 )
 
+                if (isLoginMode) {
+                    TextButton(onClick = { /* Forgot Password */ }) {
+                        Text("Forgot password?", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                TextButton(onClick = { authViewModel.signup(email, password) }) {
-                    Text("Don't have an account? Sign up", color = Color.Black, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.1f))
+                    Text(
+                        "or continue with",
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Black.copy(alpha = 0.3f))
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.1f))
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                AuthMethodCard(
+                    text = "Continue with Google",
+                    icon = Icons.Default.Language, // Slightly better than Email
+                    onClick = { authViewModel.loginWithGoogle() }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                AuthMethodCard(
+                    text = if (isLoginMode) "Create an Account" else "Continue with Email",
+                    icon = Icons.Outlined.Email,
+                    onClick = { isLoginMode = !isLoginMode }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                if (!isLoginMode) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Already have an account? ", color = Color.Black.copy(alpha = 0.5f), fontSize = 14.sp)
+                        Text(
+                            "Log In",
+                            color = MangoYellow,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.clickable { isLoginMode = true }
+                        )
+                    }
                 }
 
                 if (authState is AuthState.Loading) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    CircularProgressIndicator(color = Color.Black)
+                    CircularProgressIndicator(color = Color.Black, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
                 }
             }
         }
@@ -175,10 +223,19 @@ fun DecorativeBackground() {
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier
-                .size(200.dp)
-                .offset(x = 260.dp, y = 100.dp)
-                .rotate(15f),
-            color = Color(0xFFFFC833).copy(alpha = 0.1f),
+                .size(180.dp)
+                .offset(x = 280.dp, y = 80.dp)
+                .rotate(20f),
+            color = MangoYellow.copy(alpha = 0.08f),
+            shape = RoundedCornerShape(40.dp)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(120.dp)
+                .offset(x = (-40).dp, y = 550.dp)
+                .rotate(-15f),
+            color = MangoYellow.copy(alpha = 0.05f),
             shape = RoundedCornerShape(32.dp)
         ) {}
 
@@ -186,10 +243,10 @@ fun DecorativeBackground() {
             imageVector = Icons.Default.Star,
             contentDescription = null,
             modifier = Modifier
-                .size(64.dp)
-                .offset(x = 40.dp, y = 450.dp)
-                .rotate(-10f),
-            tint = Color(0xFFFFC833).copy(alpha = 0.2f)
+                .size(32.dp)
+                .offset(x = 40.dp, y = 100.dp)
+                .rotate(10f),
+            tint = MangoYellow.copy(alpha = 0.15f)
         )
     }
 }
@@ -203,20 +260,19 @@ fun AuthMethodCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(56.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black.copy(alpha = 0.1f)),
-        color = Color.White
+        shape = RoundedCornerShape(28.dp),
+        color = Color.Black
     ) {
         Row(
             modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = Color.Black, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(text, fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color.Black)
+            Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(text, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
         }
     }
 }

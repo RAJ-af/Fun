@@ -48,6 +48,16 @@ class AuthViewModel(
         }
     }
 
+    fun loginWithGoogle() {
+        viewModelScope.launch {
+            try {
+                repository.loginWithGoogle()
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Google login failed")
+            }
+        }
+    }
+
     fun login(email: String, pass: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
