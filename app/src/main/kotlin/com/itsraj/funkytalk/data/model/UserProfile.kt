@@ -14,5 +14,6 @@ data class UserProfile(
     val bio: String = "",
     val streak: Int = 0,
     val isOnline: Boolean = false,
-    val lastActive: Long = 0L
+    val lastActive: Long = 0L,
+    val createdAt: Long = 0L
 )

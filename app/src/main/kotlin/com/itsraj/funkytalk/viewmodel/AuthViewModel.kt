@@ -2,7 +2,6 @@ package com.itsraj.funkytalk.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +44,51 @@ class AuthViewModel(
                     _userProfile.value = profile
                     _authState.value = AuthState.Authenticated
                 }
+            }
+        }
+    }
+
+    fun login(email: String, pass: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val user = repository.login(email, pass)
+                if (user != null) {
+                    checkUserStatus()
+                } else {
+                    _authState.value = AuthState.Error("Login failed")
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun signup(email: String, pass: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val user = repository.signup(email, pass)
+                if (user != null) {
+                    _authState.value = AuthState.ProfileIncomplete
+                } else {
+                    _authState.value = AuthState.Error("Signup failed")
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun saveProfile(profile: UserProfile) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                repository.saveProfile(profile)
+                _userProfile.value = profile
+                _authState.value = AuthState.Authenticated
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Failed to save profile")
             }
         }
     }

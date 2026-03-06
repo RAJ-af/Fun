@@ -12,12 +12,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = FunkyPrimaryDark,
-    secondary = FunkySecondaryDark,
-    tertiary = FunkyTertiaryDark,
-    background = FunkyBackgroundDark,
-    surface = FunkySurfaceDark,
-    onPrimary = Color.Black,
+    primary = Primary,
+    secondary = Secondary,
+    tertiary = Tertiary,
+    background = DarkGray,
+    surface = SurfaceDark,
+    onPrimary = Color.White,
     onSecondary = Color.Black,
     onTertiary = Color.Black,
     onBackground = Color.White,
@@ -25,11 +25,11 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = FunkyPrimary,
-    secondary = FunkySecondary,
-    tertiary = FunkyTertiary,
-    background = FunkyBackground,
-    surface = FunkySurface,
+    primary = Primary,
+    secondary = Secondary,
+    tertiary = Tertiary,
+    background = LightGray,
+    surface = White,
     onPrimary = Color.White,
     onSecondary = Color.Black,
     onTertiary = Color.Black,
@@ -40,8 +40,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun FunkyTalkTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Disabled for explicit Funky branding
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

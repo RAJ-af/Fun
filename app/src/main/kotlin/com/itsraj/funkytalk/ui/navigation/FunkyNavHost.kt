@@ -2,8 +2,7 @@ package com.itsraj.funkytalk.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -63,17 +62,19 @@ fun FunkyNavHost(
         composable(Screen.Welcome.route) {
             WelcomeScreen(navController = navController)
         }
+        composable(Screen.Privacy.route) {
+            PrivacyLegalScreen(navController = navController)
+        }
         composable(Screen.Login.route) {
-            LoginScreen(navController = navController)
+            LoginScreen(navController = navController, authViewModel = authViewModel)
         }
         composable(Screen.Signup.route) {
-            SignupScreen(navController = navController)
+            SignupScreen(navController = navController, authViewModel = authViewModel)
         }
         composable(Screen.ProfileSetup.route) {
-            ProfileSetupScreen(navController = navController)
+            ProfileSetupScreen(navController = navController, authViewModel = authViewModel)
         }
 
-        composable(Screen.Privacy.route) { PlaceholderScreen("Privacy") }
         composable(Screen.Permissions.route) { PlaceholderScreen("Permissions") }
 
         // Main Tabs
@@ -84,7 +85,7 @@ fun FunkyNavHost(
         composable(Screen.Profile.route) { ProfileScreen() }
 
         // Details
-        composable("chat_detail/{userName}/{photoUrl}") { backStackEntry ->
+        composable(Screen.ChatDetail.route) { backStackEntry ->
             val userName = backStackEntry.arguments?.getString("userName") ?: "User"
             val photoUrl = backStackEntry.arguments?.getString("photoUrl") ?: ""
             IndividualChatScreen(navController, userName, photoUrl)
