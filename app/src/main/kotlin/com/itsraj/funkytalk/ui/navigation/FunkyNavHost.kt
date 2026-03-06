@@ -65,8 +65,8 @@ fun FunkyNavHost(
         composable(Screen.Auth.route) {
             AuthScreen(navController = navController, authViewModel = authViewModel)
         }
-        composable(Screen.ProfileSetup.route) {
-            ProfileSetupScreen(navController = navController, authViewModel = authViewModel)
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(navController = navController, authViewModel = authViewModel)
         }
 
         composable(Screen.Permissions.route) { PlaceholderScreen("Permissions") }

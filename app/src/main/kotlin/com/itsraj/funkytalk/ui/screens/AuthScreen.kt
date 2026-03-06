@@ -49,7 +49,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 popUpTo(Screen.Auth.route) { inclusive = true }
             }
         } else if (authState is AuthState.ProfileIncomplete) {
-            navController.navigate(Screen.ProfileSetup.route) {
+            navController.navigate(Screen.Onboarding.route) {
                 popUpTo(Screen.Auth.route) { inclusive = true }
             }
         }
