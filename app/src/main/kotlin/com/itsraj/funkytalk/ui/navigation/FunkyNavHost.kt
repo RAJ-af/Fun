@@ -62,14 +62,8 @@ fun FunkyNavHost(
         composable(Screen.Welcome.route) {
             WelcomeScreen(navController = navController)
         }
-        composable(Screen.Privacy.route) {
-            PrivacyLegalScreen(navController = navController)
-        }
-        composable(Screen.Login.route) {
-            LoginScreen(navController = navController, authViewModel = authViewModel)
-        }
-        composable(Screen.Signup.route) {
-            SignupScreen(navController = navController, authViewModel = authViewModel)
+        composable(Screen.Auth.route) {
+            AuthScreen(navController = navController, authViewModel = authViewModel)
         }
         composable(Screen.ProfileSetup.route) {
             ProfileSetupScreen(navController = navController, authViewModel = authViewModel)

@@ -1,21 +1,27 @@
 package com.itsraj.funkytalk.ui.screens
 
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -31,18 +37,22 @@ import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
 @Composable
-fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
+fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var showEmailLogin by remember { mutableStateOf(false) }
+    var isEmailMode by remember { mutableStateOf(false) }
 
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Authenticated) {
             navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Login.route) { inclusive = true }
+                popUpTo(Screen.Auth.route) { inclusive = true }
+            }
+        } else if (authState is AuthState.ProfileIncomplete) {
+            navController.navigate(Screen.ProfileSetup.route) {
+                popUpTo(Screen.Auth.route) { inclusive = true }
             }
         }
     }
@@ -52,10 +62,14 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             .fillMaxSize()
             .background(Color.White)
     ) {
+        // Decorative background elements
+        DecorativeBackground()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
@@ -64,7 +78,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = {
-                    if (showEmailLogin) showEmailLogin = false else navController.popBackStack()
+                    if (isEmailMode) isEmailMode = false else navController.popBackStack()
                 }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
                 }
@@ -73,47 +87,41 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = if (!showEmailLogin) "Welcome to FunkyTalk" else "Sign In",
-                style = MaterialTheme.typography.displaySmall.copy(
+                text = if (!isEmailMode) "Speak to the\nworld." else "Welcome\nBack.",
+                style = MaterialTheme.typography.displayMedium.copy(
                     fontWeight = FontWeight.Black,
                     color = Color.Black,
-                    letterSpacing = (-1).sp
+                    lineHeight = 52.sp,
+                    letterSpacing = (-2).sp
                 ),
                 modifier = Modifier.align(Alignment.Start).padding(horizontal = 8.dp)
             )
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            if (!showEmailLogin) {
-                SocialLoginCard(
+            if (!isEmailMode) {
+                AuthMethodCard(
                     text = "Continue with Google",
                     icon = Icons.Outlined.Email,
-                    onClick = { /* enabled later */ }
+                    onClick = { /* Implement Google Auth */ }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SocialLoginCard(
-                    text = "Continue with Facebook",
-                    icon = Icons.Outlined.Email,
-                    onClick = { /* enabled later */ }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SocialLoginCard(
+                AuthMethodCard(
                     text = "Continue with Email",
                     icon = Icons.Outlined.Email,
-                    onClick = { showEmailLogin = true }
+                    onClick = { isEmailMode = true }
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(48.dp))
 
-                TextButton(onClick = { navController.navigate(Screen.Signup.route) }) {
-                    Text("Don't have an account? Sign up", fontWeight = FontWeight.Bold, color = Color.Black)
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    "By continuing, you agree to our Terms of Service.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Black.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             } else {
                 PremiumTextField(
                     value = email,
@@ -151,11 +159,21 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                 Spacer(modifier = Modifier.height(48.dp))
 
                 PremiumButton(
-                    text = "Sign In",
-                    onClick = { authViewModel.login(email, password) },
+                    text = "Continue",
+                    onClick = {
+                        // Simplified logic: try login, if fails with 'user not found' in a real app we'd trigger signup
+                        // For MVP we just use the login/signup calls from ViewModel
+                        authViewModel.login(email, password)
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = authState !is AuthState.Loading
+                    enabled = authState !is AuthState.Loading && email.isNotBlank() && password.length >= 6
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = { authViewModel.signup(email, password) }) {
+                    Text("Don't have an account? Sign up", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
 
                 if (authState is AuthState.Loading) {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -167,7 +185,37 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
 }
 
 @Composable
-fun SocialLoginCard(
+fun DecorativeBackground() {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        // Draw some subtle rounded shapes and star elements
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Tilted card shape
+        Surface(
+            modifier = Modifier
+                .size(200.dp)
+                .offset(x = 260.dp, y = 100.dp)
+                .rotate(15f),
+            color = Color(0xFFFFC833).copy(alpha = 0.1f),
+            shape = RoundedCornerShape(32.dp)
+        ) {}
+
+        // Abstract star
+        Icon(
+            imageVector = Icons.Default.Star,
+            contentDescription = null,
+            modifier = Modifier
+                .size(64.dp)
+                .offset(x = 40.dp, y = 450.dp)
+                .rotate(-10f),
+            tint = Color(0xFFFFC833).copy(alpha = 0.2f)
+        )
+    }
+}
+
+@Composable
+fun AuthMethodCard(
     text: String,
     icon: ImageVector,
     onClick: () -> Unit
@@ -188,7 +236,7 @@ fun SocialLoginCard(
         ) {
             Icon(imageVector = icon, contentDescription = null, tint = Color.Black, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
+            Text(text, fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color.Black)
         }
     }
 }

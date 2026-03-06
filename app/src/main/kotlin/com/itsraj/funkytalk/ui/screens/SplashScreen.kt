@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -33,7 +34,7 @@ fun SplashScreen(
             targetValue = 1f,
             animationSpec = tween(1500, easing = LinearOutSlowInEasing)
         )
-        delay(500)
+        delay(800)
 
         when (authState) {
             is AuthState.Authenticated -> {
@@ -54,21 +55,42 @@ fun SplashScreen(
         }
     }
 
+    // Modern soft gradient background
+    val softBackground = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFF9F9FB),
+            Color(0xFFFFFFFF)
+        )
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(softBackground),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "FunkyTalk",
-            style = MaterialTheme.typography.displayLarge.copy(
-                fontWeight = FontWeight.Black,
-                color = Color.Black,
-                fontSize = 52.sp,
-                letterSpacing = (-1).sp
-            ),
-            modifier = Modifier.alpha(alphaAnim.value)
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "FunkyTalk",
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black,
+                    fontSize = 52.sp,
+                    letterSpacing = (-1.5).sp
+                ),
+                modifier = Modifier.alpha(alphaAnim.value)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Subtle premium accent line
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .background(Color(0xFFFFC833), MaterialTheme.shapes.small)
+                    .alpha(alphaAnim.value)
+            )
+        }
     }
 }
