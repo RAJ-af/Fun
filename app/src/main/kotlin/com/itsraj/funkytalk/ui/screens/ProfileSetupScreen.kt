@@ -23,7 +23,7 @@ import com.itsraj.funkytalk.ui.navigation.Screen
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 import io.github.jan.supabase.auth.auth
-import java.time.Instant
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -195,7 +195,7 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
                             email = user.email ?: "",
                             native_language = nativeLanguage,
                             learning_language = learningLanguage,
-                            created_at = Instant.now().toString()
+                            created_at = Date().toString()
                         )
                         authViewModel.saveProfile(profile)
                     }

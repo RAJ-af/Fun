@@ -1,6 +1,7 @@
 package com.itsraj.funkytalk.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.components.PremiumCard
 import com.itsraj.funkytalk.ui.components.PremiumTextField
+import com.itsraj.funkytalk.ui.navigation.Screen
 import com.itsraj.funkytalk.ui.theme.*
 
 @Composable
@@ -58,7 +60,12 @@ fun ChatsScreen(navController: NavController) {
 
             items(10) { index ->
                 PremiumCard(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clickable {
+                            navController.navigate(Screen.ChatDetail.createRoute("User $index", ""))
+                        }
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

@@ -3,10 +3,11 @@ package com.itsraj.funkytalk.data.repository
 import com.itsraj.funkytalk.FunkyTalkApp
 import com.itsraj.funkytalk.data.model.UserProfile
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
-import java.time.Instant
+import java.util.Date
 
 class AuthRepository {
     private val supabase = FunkyTalkApp.supabase
@@ -43,6 +44,10 @@ class AuthRepository {
         return user
     }
 
+    suspend fun loginWithGoogle() {
+        auth.signInWith(Google)
+    }
+
     suspend fun signup(email: String, pass: String): UserInfo? {
         auth.signUpWith(Email) {
             this.email = email
@@ -63,7 +68,7 @@ class AuthRepository {
                 val profile = UserProfile(
                     id = user.id,
                     email = user.email ?: "",
-                    created_at = Instant.now().toString()
+                    created_at = Date().toString()
                 )
                 supabase.postgrest["profiles"].upsert(profile)
             }
