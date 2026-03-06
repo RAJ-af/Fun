@@ -5,20 +5,27 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.itsraj.funkytalk.data.model.UserProfile
+import com.itsraj.funkytalk.ui.components.PremiumButton
+import com.itsraj.funkytalk.ui.components.PremiumTextField
 import com.itsraj.funkytalk.ui.navigation.Screen
+import com.itsraj.funkytalk.ui.theme.BackgroundGradient
+import com.itsraj.funkytalk.ui.theme.GradientCyanBlue
+import com.itsraj.funkytalk.ui.theme.GradientPinkPurple
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
@@ -50,63 +57,68 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Set Up Your Profile", fontWeight = FontWeight.Bold) }
-            )
-        }
-    ) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.radialGradient(BackgroundGradient))
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
+            Spacer(modifier = Modifier.height(64.dp))
+
+            Text(
+                text = "Set Up Profile",
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+            )
+
             Text(
                 text = "Step 1: The Basics",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                modifier = Modifier.fillMaxWidth()
+                color = Color.White.copy(alpha = 0.5f),
+                modifier = Modifier.padding(top = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-            OutlinedTextField(
+            PremiumTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Full Name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                label = "Full Name",
+                trailingIcon = { Icon(Icons.Outlined.Person, null, tint = Color.White.copy(alpha = 0.4f)) }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Native Language Dropdown
-            ExposedDropdownMenuBox(
-                expanded = nativeExpanded,
-                onExpandedChange = { nativeExpanded = !nativeExpanded },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
+            // Native Language
+            Box(modifier = Modifier.fillMaxWidth()) {
+                PremiumTextField(
                     value = nativeLanguage,
                     onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Native Language") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = nativeExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    label = "Native Language",
+                    modifier = Modifier.clickable { nativeExpanded = true },
+                    trailingIcon = {
+                        IconButton(onClick = { nativeExpanded = true }) {
+                            Icon(Icons.Default.ArrowDropDown, null, tint = Color.White.copy(alpha = 0.4f))
+                        }
+                    }
                 )
-                ExposedDropdownMenu(
+                DropdownMenu(
                     expanded = nativeExpanded,
-                    onDismissRequest = { nativeExpanded = false }
+                    onDismissRequest = { nativeExpanded = false },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                 ) {
                     languages.forEach { lang ->
                         DropdownMenuItem(
-                            text = { Text(lang) },
+                            text = { Text(lang, color = Color.White) },
                             onClick = {
                                 nativeLanguage = lang
                                 nativeExpanded = false
@@ -118,28 +130,27 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Learning Language Dropdown
-            ExposedDropdownMenuBox(
-                expanded = learningExpanded,
-                onExpandedChange = { learningExpanded = !learningExpanded },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
+            // Learning Language
+            Box(modifier = Modifier.fillMaxWidth()) {
+                PremiumTextField(
                     value = learningLanguage,
                     onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Learning Language") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = learningExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    label = "Learning Language",
+                    modifier = Modifier.clickable { learningExpanded = true },
+                    trailingIcon = {
+                        IconButton(onClick = { learningExpanded = true }) {
+                            Icon(Icons.Default.ArrowDropDown, null, tint = Color.White.copy(alpha = 0.4f))
+                        }
+                    }
                 )
-                ExposedDropdownMenu(
+                DropdownMenu(
                     expanded = learningExpanded,
-                    onDismissRequest = { learningExpanded = false }
+                    onDismissRequest = { learningExpanded = false },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                 ) {
                     languages.forEach { lang ->
                         DropdownMenuItem(
-                            text = { Text(lang) },
+                            text = { Text(lang, color = Color.White) },
                             onClick = {
                                 learningLanguage = lang
                                 learningExpanded = false
@@ -150,17 +161,18 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
             }
 
             if (authState is AuthState.Error) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = (authState as AuthState.Error).message,
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp
+                    fontSize = 14.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
-            Button(
+            PremiumButton(
+                text = "Complete Step 1",
                 onClick = {
                     val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                     if (user != null) {
@@ -175,28 +187,17 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
                         authViewModel.saveProfile(profile)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = authState !is AuthState.Loading && name.isNotBlank() && nativeLanguage.isNotBlank() && learningLanguage.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                if (authState is AuthState.Loading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text("Complete Step 1", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                }
-            }
+                modifier = Modifier.fillMaxWidth(),
+                gradient = GradientCyanBlue,
+                enabled = authState !is AuthState.Loading && name.isNotBlank() && nativeLanguage.isNotBlank() && learningLanguage.isNotBlank()
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "You can add more details later in settings.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                color = Color.White.copy(alpha = 0.4f)
             )
         }
     }
