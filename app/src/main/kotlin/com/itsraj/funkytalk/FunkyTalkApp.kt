@@ -1,22 +1,26 @@
 package com.itsraj.funkytalk
 
 import android.app.Application
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
 
 class FunkyTalkApp : Application() {
+
+    companion object {
+        lateinit var supabase: SupabaseClient
+    }
+
     override fun onCreate() {
         super.onCreate()
 
-        val options = FirebaseOptions.Builder()
-            .setProjectId("funkytalk-317cf")
-            .setApplicationId("1:665352364995:android:eda0018830a599e0431376")
-            .setApiKey("AIzaSyCbuuJaW1mppWpX8pZCgiyK1JPJtt9ZnWc")
-            .setStorageBucket("funkytalk-317cf.firebasestorage.app")
-            .build()
-
-        if (FirebaseApp.getApps(this).isEmpty()) {
-            FirebaseApp.initializeApp(this, options)
+        supabase = createSupabaseClient(
+            supabaseUrl = "https://dulpqochkxtamqztauea.supabase.co",
+            supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bHBxb2Noa3h0YW1xenRhdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MDA3OTUsImV4cCI6MjA4ODM3Njc5NX0.yrpyrNkNnsXf1fXvVpxPlFu3IeQn6Oz0TK6BoCrOd-o"
+        ) {
+            install(Auth)
+            install(Postgrest)
         }
     }
 }

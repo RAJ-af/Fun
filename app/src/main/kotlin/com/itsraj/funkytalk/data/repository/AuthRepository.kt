@@ -1,38 +1,78 @@
 package com.itsraj.funkytalk.data.repository
 
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.FirebaseFirestore
+import com.itsraj.funkytalk.FunkyTalkApp
 import com.itsraj.funkytalk.data.model.UserProfile
-import kotlinx.coroutines.tasks.await
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.user.UserInfo
+import io.github.jan.supabase.postgrest.postgrest
+import java.time.Instant
 
-class AuthRepository(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
-) {
-    val currentUser: FirebaseUser? get() = auth.currentUser
+class AuthRepository {
+    private val supabase = FunkyTalkApp.supabase
+    private val auth = supabase.auth
 
-    suspend fun getProfile(uid: String): UserProfile? {
+    val currentUser: UserInfo? get() = auth.currentUserOrNull()
+
+    suspend fun getProfile(id: String): UserProfile? {
         return try {
-            firestore.collection("users").document(uid).get().await().toObject(UserProfile::class.java)
+            val response = supabase.postgrest["profiles"].select {
+                filter {
+                    eq("id", id)
+                }
+            }.decodeSingleOrNull<UserProfile>()
+            response
         } catch (e: Exception) {
             null
         }
     }
 
     suspend fun saveProfile(profile: UserProfile) {
-        firestore.collection("users").document(profile.uid).set(profile).await()
+        supabase.postgrest["profiles"].upsert(profile)
     }
 
-    suspend fun login(email: String, pass: String): FirebaseUser? {
-        return auth.signInWithEmailAndPassword(email, pass).await().user
+    suspend fun login(email: String, pass: String): UserInfo? {
+        auth.signInWith(Email) {
+            this.email = email
+            this.password = pass
+        }
+        val user = auth.currentUserOrNull()
+        if (user != null) {
+            createInitialProfileRow(user)
+        }
+        return user
     }
 
-    suspend fun signup(email: String, pass: String): FirebaseUser? {
-        return auth.createUserWithEmailAndPassword(email, pass).await().user
+    suspend fun signup(email: String, pass: String): UserInfo? {
+        auth.signUpWith(Email) {
+            this.email = email
+            this.password = pass
+        }
+        val user = auth.currentUserOrNull()
+        if (user != null) {
+            createInitialProfileRow(user)
+        }
+        return user
     }
 
-    fun logout() {
+    private suspend fun createInitialProfileRow(user: UserInfo) {
+        try {
+            // Check if profile exists first to avoid overwriting existing data with empty strings
+            val existing = getProfile(user.id)
+            if (existing == null) {
+                val profile = UserProfile(
+                    id = user.id,
+                    email = user.email ?: "",
+                    created_at = Instant.now().toString()
+                )
+                supabase.postgrest["profiles"].upsert(profile)
+            }
+        } catch (e: Exception) {
+            // Log error
+        }
+    }
+
+    suspend fun logout() {
         auth.signOut()
     }
 }

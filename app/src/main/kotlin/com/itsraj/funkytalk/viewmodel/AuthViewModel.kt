@@ -37,7 +37,7 @@ class AuthViewModel(
             if (user == null) {
                 _authState.value = AuthState.Unauthenticated
             } else {
-                val profile = repository.getProfile(user.uid)
+                val profile = repository.getProfile(user.id)
                 if (profile == null) {
                     _authState.value = AuthState.ProfileIncomplete
                 } else {
@@ -94,8 +94,10 @@ class AuthViewModel(
     }
 
     fun logout() {
-        repository.logout()
-        _authState.value = AuthState.Unauthenticated
-        _userProfile.value = null
+        viewModelScope.launch {
+            repository.logout()
+            _authState.value = AuthState.Unauthenticated
+            _userProfile.value = null
+        }
     }
 }

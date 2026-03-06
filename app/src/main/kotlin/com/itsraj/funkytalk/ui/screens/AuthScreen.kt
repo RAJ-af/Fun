@@ -1,9 +1,7 @@
 package com.itsraj.funkytalk.ui.screens
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,7 +59,6 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Decorative background elements
         DecorativeBackground()
 
         Column(
@@ -100,14 +96,6 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
             Spacer(modifier = Modifier.height(48.dp))
 
             if (!isEmailMode) {
-                AuthMethodCard(
-                    text = "Continue with Google",
-                    icon = Icons.Outlined.Email,
-                    onClick = { /* Implement Google Auth */ }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 AuthMethodCard(
                     text = "Continue with Email",
                     icon = Icons.Outlined.Email,
@@ -161,8 +149,6 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 PremiumButton(
                     text = "Continue",
                     onClick = {
-                        // Simplified logic: try login, if fails with 'user not found' in a real app we'd trigger signup
-                        // For MVP we just use the login/signup calls from ViewModel
                         authViewModel.login(email, password)
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -186,12 +172,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
 
 @Composable
 fun DecorativeBackground() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        // Draw some subtle rounded shapes and star elements
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
-        // Tilted card shape
         Surface(
             modifier = Modifier
                 .size(200.dp)
@@ -201,7 +182,6 @@ fun DecorativeBackground() {
             shape = RoundedCornerShape(32.dp)
         ) {}
 
-        // Abstract star
         Icon(
             imageVector = Icons.Default.Star,
             contentDescription = null,
