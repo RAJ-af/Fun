@@ -15,12 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.itsraj.funkytalk.FunkyTalkApp
 import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
 import com.itsraj.funkytalk.ui.navigation.Screen
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
+import io.github.jan.supabase.auth.auth
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -184,15 +187,15 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
             PremiumButton(
                 text = "Complete Step 1",
                 onClick = {
-                    val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    val user = FunkyTalkApp.supabase.auth.currentUserOrNull()
                     if (user != null) {
                         val profile = UserProfile(
-                            uid = user.uid,
+                            id = user.id,
                             name = name,
                             email = user.email ?: "",
-                            nativeLanguage = nativeLanguage,
-                            learningLanguage = learningLanguage,
-                            createdAt = System.currentTimeMillis()
+                            native_language = nativeLanguage,
+                            learning_language = learningLanguage,
+                            created_at = Instant.now().toString()
                         )
                         authViewModel.saveProfile(profile)
                     }
