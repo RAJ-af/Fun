@@ -20,15 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.itsraj.funkytalk.ui.navigation.Screen
-import com.itsraj.funkytalk.ui.theme.GradientPinkPurple
+import com.itsraj.funkytalk.ui.theme.MangoYellow
 
 sealed class BottomNavItem(val title: String, val icon: ImageVector, val screen: Screen) {
     object Home : BottomNavItem("Home", Icons.Outlined.Home, Screen.Home)
@@ -53,18 +51,21 @@ fun FunkyBottomNavigation(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 24.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        Card(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
-                .shadow(16.dp, RoundedCornerShape(36.dp)),
+                .shadow(
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(36.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.2f),
+                    spotColor = Color.Black.copy(alpha = 0.2f)
+                ),
             shape = RoundedCornerShape(36.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            color = Color.White
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -76,16 +77,20 @@ fun FunkyBottomNavigation(navController: NavController) {
                     val scale by animateFloatAsState(if (isSelected) 1.2f else 1f)
 
                     if (item == BottomNavItem.Discover) {
-                        // Larger center button
+                        // Highlighted center button with Mango Yellow
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
                                 .clip(CircleShape)
-                                .background(Brush.linearGradient(GradientPinkPurple))
+                                .background(if (isSelected) MangoYellow else Color.Black)
                                 .clickable { navigateTo(navController, item.screen.route) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(item.icon, contentDescription = item.title, tint = Color.White)
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title,
+                                tint = if (isSelected) Color.Black else Color.White
+                            )
                         }
                     } else {
                         IconButton(
@@ -95,7 +100,7 @@ fun FunkyBottomNavigation(navController: NavController) {
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.title,
-                                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                tint = if (isSelected) MangoYellow else Color.Black.copy(alpha = 0.6f)
                             )
                         }
                     }

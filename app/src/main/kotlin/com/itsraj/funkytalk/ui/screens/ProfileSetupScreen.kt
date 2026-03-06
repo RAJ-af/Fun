@@ -2,18 +2,14 @@ package com.itsraj.funkytalk.ui.screens
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,9 +19,6 @@ import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
 import com.itsraj.funkytalk.ui.navigation.Screen
-import com.itsraj.funkytalk.ui.theme.BackgroundGradient
-import com.itsraj.funkytalk.ui.theme.GradientCyanBlue
-import com.itsraj.funkytalk.ui.theme.GradientPinkPurple
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
@@ -60,7 +53,7 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.radialGradient(BackgroundGradient))
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -75,15 +68,16 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
             Text(
                 text = "Set Up Profile",
                 style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black,
+                    letterSpacing = (-1).sp
                 )
             )
 
             Text(
                 text = "Step 1: The Basics",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White.copy(alpha = 0.5f),
+                color = Color.Black.copy(alpha = 0.5f),
                 modifier = Modifier.padding(top = 8.dp)
             )
 
@@ -93,32 +87,40 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
                 value = name,
                 onValueChange = { name = it },
                 label = "Full Name",
-                trailingIcon = { Icon(Icons.Outlined.Person, null, tint = Color.White.copy(alpha = 0.4f)) }
+                trailingIcon = { Icon(Icons.Outlined.Person, null, tint = Color.Black.copy(alpha = 0.4f)) }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Native Language
             Box(modifier = Modifier.fillMaxWidth()) {
-                PremiumTextField(
+                OutlinedTextField(
                     value = nativeLanguage,
                     onValueChange = {},
-                    label = "Native Language",
-                    modifier = Modifier.clickable { nativeExpanded = true },
+                    label = { Text("Native Language") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth().clickable { nativeExpanded = true },
+                    shape = RoundedCornerShape(16.dp),
                     trailingIcon = {
                         IconButton(onClick = { nativeExpanded = true }) {
-                            Icon(Icons.Default.ArrowDropDown, null, tint = Color.White.copy(alpha = 0.4f))
+                            Icon(Icons.Default.ArrowDropDown, null, tint = Color.Black.copy(alpha = 0.4f))
                         }
-                    }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black.copy(alpha = 0.3f),
+                        focusedLabelColor = Color.Black,
+                        unfocusedLabelColor = Color.Black.copy(alpha = 0.5f)
+                    )
                 )
                 DropdownMenu(
                     expanded = nativeExpanded,
                     onDismissRequest = { nativeExpanded = false },
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                    modifier = Modifier.background(Color.White).fillMaxWidth(0.8f)
                 ) {
                     languages.forEach { lang ->
                         DropdownMenuItem(
-                            text = { Text(lang, color = Color.White) },
+                            text = { Text(lang, color = Color.Black) },
                             onClick = {
                                 nativeLanguage = lang
                                 nativeExpanded = false
@@ -132,25 +134,33 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
 
             // Learning Language
             Box(modifier = Modifier.fillMaxWidth()) {
-                PremiumTextField(
+                OutlinedTextField(
                     value = learningLanguage,
                     onValueChange = {},
-                    label = "Learning Language",
-                    modifier = Modifier.clickable { learningExpanded = true },
+                    label = { Text("Learning Language") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth().clickable { learningExpanded = true },
+                    shape = RoundedCornerShape(16.dp),
                     trailingIcon = {
                         IconButton(onClick = { learningExpanded = true }) {
-                            Icon(Icons.Default.ArrowDropDown, null, tint = Color.White.copy(alpha = 0.4f))
+                            Icon(Icons.Default.ArrowDropDown, null, tint = Color.Black.copy(alpha = 0.4f))
                         }
-                    }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black.copy(alpha = 0.3f),
+                        focusedLabelColor = Color.Black,
+                        unfocusedLabelColor = Color.Black.copy(alpha = 0.5f)
+                    )
                 )
                 DropdownMenu(
                     expanded = learningExpanded,
                     onDismissRequest = { learningExpanded = false },
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                    modifier = Modifier.background(Color.White).fillMaxWidth(0.8f)
                 ) {
                     languages.forEach { lang ->
                         DropdownMenuItem(
-                            text = { Text(lang, color = Color.White) },
+                            text = { Text(lang, color = Color.Black) },
                             onClick = {
                                 learningLanguage = lang
                                 learningExpanded = false
@@ -164,7 +174,7 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = (authState as AuthState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
+                    color = Color.Red,
                     fontSize = 14.sp
                 )
             }
@@ -188,7 +198,6 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                gradient = GradientCyanBlue,
                 enabled = authState !is AuthState.Loading && name.isNotBlank() && nativeLanguage.isNotBlank() && learningLanguage.isNotBlank()
             )
 
@@ -197,7 +206,7 @@ fun ProfileSetupScreen(navController: NavController, authViewModel: AuthViewMode
             Text(
                 text = "You can add more details later in settings.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.4f)
+                color = Color.Black.copy(alpha = 0.4f)
             )
         }
     }

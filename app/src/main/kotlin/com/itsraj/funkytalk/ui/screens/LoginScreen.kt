@@ -1,14 +1,12 @@
 package com.itsraj.funkytalk.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
@@ -17,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -30,9 +27,6 @@ import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
 import com.itsraj.funkytalk.ui.navigation.Screen
-import com.itsraj.funkytalk.ui.theme.BackgroundGradient
-import com.itsraj.funkytalk.ui.theme.GradientCyanBlue
-import com.itsraj.funkytalk.ui.theme.GradientPinkPurple
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
@@ -56,7 +50,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.radialGradient(BackgroundGradient))
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -72,7 +66,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                 IconButton(onClick = {
                     if (showEmailLogin) showEmailLogin = false else navController.popBackStack()
                 }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
                 }
             }
 
@@ -81,8 +75,8 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             Text(
                 text = if (!showEmailLogin) "Welcome to FunkyTalk" else "Sign In",
                 style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black,
                     letterSpacing = (-1).sp
                 ),
                 modifier = Modifier.align(Alignment.Start).padding(horizontal = 8.dp)
@@ -110,14 +104,13 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                 SocialLoginCard(
                     text = "Continue with Email",
                     icon = Icons.Outlined.Email,
-                    onClick = { showEmailLogin = true },
-                    gradient = GradientCyanBlue
+                    onClick = { showEmailLogin = true }
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
 
                 TextButton(onClick = { navController.navigate(Screen.Signup.route) }) {
-                    Text("Don't have an account? Sign up", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("Don't have an account? Sign up", fontWeight = FontWeight.Bold, color = Color.Black)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -127,7 +120,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                     onValueChange = { email = it },
                     label = "Email",
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email),
-                    trailingIcon = { Icon(Icons.Outlined.Email, null, tint = Color.White.copy(alpha = 0.4f)) }
+                    trailingIcon = { Icon(Icons.Outlined.Email, null, tint = Color.Black.copy(alpha = 0.4f)) }
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -140,7 +133,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                     trailingIcon = {
                         val image = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(imageVector = image, contentDescription = null, tint = Color.White.copy(alpha = 0.4f))
+                            Icon(imageVector = image, contentDescription = null, tint = Color.Black.copy(alpha = 0.4f))
                         }
                     }
                 )
@@ -149,7 +142,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = (authState as AuthState.Error).message,
-                        color = MaterialTheme.colorScheme.error,
+                        color = Color.Red,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -161,13 +154,12 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                     text = "Sign In",
                     onClick = { authViewModel.login(email, password) },
                     modifier = Modifier.fillMaxWidth(),
-                    gradient = GradientPinkPurple,
                     enabled = authState !is AuthState.Loading
                 )
 
                 if (authState is AuthState.Loading) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    CircularProgressIndicator(color = Color.Black)
                 }
             }
         }
@@ -178,29 +170,25 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
 fun SocialLoginCard(
     text: String,
     icon: ImageVector,
-    onClick: () -> Unit,
-    gradient: List<Color>? = null
+    onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .height(64.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (gradient == null) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f) else Color.Transparent
-        )
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black.copy(alpha = 0.1f)),
+        color = Color.White
     ) {
-        val boxModifier = if (gradient != null) Modifier.background(Brush.linearGradient(gradient)) else Modifier
-
         Row(
-            modifier = boxModifier.fillMaxSize().padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Icon(imageVector = icon, contentDescription = null, tint = Color.Black, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+            Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
         }
     }
 }
