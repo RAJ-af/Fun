@@ -1,28 +1,41 @@
 package com.itsraj.funkytalk.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.itsraj.funkytalk.ui.navigation.Screen
+import com.itsraj.funkytalk.ui.theme.GradientPinkPurple
 
 sealed class BottomNavItem(val title: String, val icon: ImageVector, val screen: Screen) {
-    object Home : BottomNavItem("Home", Icons.Default.Home, Screen.Home)
-    object Moments : BottomNavItem("Moments", Icons.Default.Public, Screen.Moments)
-    object Discover : BottomNavItem("Discover", Icons.Default.Search, Screen.Discover)
-    object Chats : BottomNavItem("Chats", Icons.Default.Chat, Screen.Chats)
-    object Profile : BottomNavItem("Profile", Icons.Default.Person, Screen.Profile)
+    object Home : BottomNavItem("Home", Icons.Outlined.Home, Screen.Home)
+    object Moments : BottomNavItem("Moments", Icons.Outlined.Language, Screen.Moments)
+    object Discover : BottomNavItem("Discover", Icons.Outlined.Explore, Screen.Discover)
+    object Chats : BottomNavItem("Chats", Icons.Outlined.ChatBubbleOutline, Screen.Chats)
+    object Profile : BottomNavItem("Profile", Icons.Outlined.PersonOutline, Screen.Profile)
 }
 
 @Composable
@@ -34,26 +47,72 @@ fun FunkyBottomNavigation(navController: NavController) {
         BottomNavItem.Chats,
         BottomNavItem.Profile
     )
-    NavigationBar {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
-        items.forEach { item ->
-            NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = item.title) },
-                label = { Text(text = item.title) },
-                selected = currentRoute == item.screen.route,
-                onClick = {
-                    navController.navigate(item.screen.route) {
-                        navController.graph.startDestinationRoute?.let { route ->
-                            popUpTo(route) {
-                                saveState = true
-                            }
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .shadow(16.dp, RoundedCornerShape(36.dp)),
+            shape = RoundedCornerShape(36.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEach { item ->
+                    val isSelected = currentRoute == item.screen.route
+                    val scale by animateFloatAsState(if (isSelected) 1.2f else 1f)
+
+                    if (item == BottomNavItem.Discover) {
+                        // Larger center button
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(Brush.linearGradient(GradientPinkPurple))
+                                .clickable { navigateTo(navController, item.screen.route) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(item.icon, contentDescription = item.title, tint = Color.White)
                         }
-                        launchSingleTop = true
-                        restoreState = true
+                    } else {
+                        IconButton(
+                            onClick = { navigateTo(navController, item.screen.route) },
+                            modifier = Modifier.scale(scale)
+                        ) {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title,
+                                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
                     }
                 }
-            )
+            }
         }
+    }
+}
+
+private fun navigateTo(navController: NavController, route: String) {
+    navController.navigate(route) {
+        navController.graph.startDestinationRoute?.let { startRoute ->
+            popUpTo(startRoute) {
+                saveState = true
+            }
+        }
+        launchSingleTop = true
+        restoreState = true
     }
 }

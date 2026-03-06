@@ -15,42 +15,38 @@ private val DarkColorScheme = darkColorScheme(
     primary = Primary,
     secondary = Secondary,
     tertiary = Tertiary,
-    background = DarkGray,
+    background = NearBlack,
     surface = SurfaceDark,
-    onPrimary = Color.White,
+    surfaceVariant = SurfaceVariantDark,
+    onPrimary = Color.Black,
     onSecondary = Color.Black,
     onTertiary = Color.Black,
     onBackground = Color.White,
     onSurface = Color.White,
 )
 
+// For Premium MVP, we focus on the Dark Theme as the primary experience
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
     secondary = Secondary,
     tertiary = Tertiary,
-    background = LightGray,
-    surface = White,
+    background = Color(0xFFF5F5F7),
+    surface = Color.White,
+    surfaceVariant = Color(0xFFE8E8EC),
     onPrimary = Color.White,
-    onSecondary = Color.Black,
+    onSecondary = Color.White,
     onTertiary = Color.Black,
-    onBackground = Color.Black,
-    onSurface = Color.Black,
+    onBackground = Black,
+    onSurface = Black,
 )
 
 @Composable
 fun FunkyTalkTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Force dark for premium experience by default
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
