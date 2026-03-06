@@ -44,15 +44,12 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sign Up") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -66,7 +63,7 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
             verticalArrangement = Arrangement.Top
         ) {
             Text(
-                text = "Create Account",
+                text = "Join FunkyTalk",
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -147,8 +144,14 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            TextButton(onClick = { navController.navigate(Screen.Privacy.route) }) {
+                Text("By signing up, you agree to our Privacy Policy", fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             TextButton(onClick = { navController.navigate(Screen.Login.route) }) {
-                Text("Already have an account? Login", color = MaterialTheme.colorScheme.secondary)
+                Text("Already have an account? Login", color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
             }
         }
     }

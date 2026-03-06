@@ -8,11 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.navigation.Screen
@@ -27,25 +25,16 @@ fun SplashScreen(
 ) {
     val authState by authViewModel.authState.collectAsState()
 
-    val infiniteTransition = rememberInfiniteTransition()
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
+    // Simple fade-in animation
+    val alphaAnim = remember { Animatable(0f) }
 
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.secondary
+    LaunchedEffect(Unit) {
+        alphaAnim.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(1500, easing = LinearOutSlowInEasing)
         )
-    )
+        delay(500) // Stay for 0.5s after fade-in, total ~2s
 
-    LaunchedEffect(authState) {
-        delay(2000) // Minimum splash time
         when (authState) {
             is AuthState.Authenticated -> {
                 navController.navigate(Screen.Home.route) {
@@ -57,29 +46,30 @@ fun SplashScreen(
                     popUpTo(Screen.Splash.route) { inclusive = true }
                 }
             }
-            is AuthState.Unauthenticated -> {
+            else -> {
+                // Default to Welcome (Quotes)
                 navController.navigate(Screen.Welcome.route) {
                     popUpTo(Screen.Splash.route) { inclusive = true }
                 }
             }
-            else -> {}
         }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradient),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "FT",
+            text = "FunkyTalk",
             style = MaterialTheme.typography.displayLarge.copy(
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                fontSize = 120.sp
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 48.sp,
+                letterSpacing = 2.sp
             ),
-            modifier = Modifier.scale(scale)
+            modifier = Modifier.alpha(alphaAnim.value)
         )
     }
 }

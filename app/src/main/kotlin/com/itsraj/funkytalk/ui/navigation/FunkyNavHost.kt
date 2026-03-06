@@ -2,8 +2,7 @@ package com.itsraj.funkytalk.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -63,6 +62,9 @@ fun FunkyNavHost(
         composable(Screen.Welcome.route) {
             WelcomeScreen(navController = navController)
         }
+        composable(Screen.Privacy.route) {
+            PrivacyLegalScreen(navController = navController)
+        }
         composable(Screen.Login.route) {
             LoginScreen(navController = navController, authViewModel = authViewModel)
         }
@@ -73,7 +75,6 @@ fun FunkyNavHost(
             ProfileSetupScreen(navController = navController, authViewModel = authViewModel)
         }
 
-        composable(Screen.Privacy.route) { PlaceholderScreen("Privacy") }
         composable(Screen.Permissions.route) { PlaceholderScreen("Permissions") }
 
         // Main Tabs
