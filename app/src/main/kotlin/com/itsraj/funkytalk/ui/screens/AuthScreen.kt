@@ -1,6 +1,7 @@
 package com.itsraj.funkytalk.ui.screens
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,16 +11,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,7 +40,6 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoginMode by remember { mutableStateOf(false) }
 
     val authState by authViewModel.authState.collectAsState()
 
@@ -83,7 +80,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Column(
                 modifier = Modifier
@@ -92,7 +89,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if (isLoginMode) "Welcome back," else "Create an account",
+                    text = "Welcome to FunkyTalk",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Black,
                         color = Color.Black,
@@ -102,8 +99,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
 
                 Text(
-                    text = if (isLoginMode) "We happy to see you here again. Enter your email address and password"
-                          else "Create your account, it takes less than a minute. Enter your email and password",
+                    text = "Enter your email and password to continue. If you don't have an account, we'll create one for you.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = Color.Black.copy(alpha = 0.5f),
                         lineHeight = 22.sp
@@ -111,7 +107,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                     modifier = Modifier.align(Alignment.Start).padding(top = 8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 PremiumTextField(
                     value = email,
@@ -135,35 +131,40 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                     }
                 )
 
-                if (authState is AuthState.Error) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = (authState as AuthState.Error).message,
-                        color = Color.Red,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                when (val state = authState) {
+                    is AuthState.Error -> {
+                        Text(
+                            text = state.message,
+                            color = Color.Red,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.align(Alignment.Start).padding(start = 4.dp)
+                        )
+                    }
+                    is AuthState.Success -> {
+                        Text(
+                            text = state.message,
+                            color = Color(0xFF4CAF50),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.align(Alignment.Start).padding(start = 4.dp)
+                        )
+                    }
+                    else -> {}
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 PremiumButton(
-                    text = if (isLoginMode) "Log In" else "Create an Account",
-                    onClick = {
-                        if (isLoginMode) authViewModel.login(email, password)
-                        else authViewModel.signup(email, password)
-                    },
+                    text = "Continue",
+                    onClick = { authViewModel.continueWithEmail(email, password) },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     enabled = authState !is AuthState.Loading && email.isNotBlank() && password.length >= 6
                 )
 
-                if (isLoginMode) {
-                    TextButton(onClick = { /* Forgot Password */ }) {
-                        Text("Forgot password?", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -171,46 +172,43 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 ) {
                     HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.1f))
                     Text(
-                        "or continue with",
+                        "or",
                         modifier = Modifier.padding(horizontal = 16.dp),
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.Black.copy(alpha = 0.3f))
                     )
                     HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.1f))
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                AuthMethodCard(
-                    text = "Continue with Google",
-                    icon = Icons.Default.Language, // Slightly better than Email
-                    onClick = { authViewModel.loginWithGoogle() }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                AuthMethodCard(
-                    text = if (isLoginMode) "Create an Account" else "Continue with Email",
-                    icon = Icons.Outlined.Email,
-                    onClick = { isLoginMode = !isLoginMode }
-                )
-
                 Spacer(modifier = Modifier.height(24.dp))
 
-                if (!isLoginMode) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Already have an account? ", color = Color.Black.copy(alpha = 0.5f), fontSize = 14.sp)
+                // Continue with Google Button
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clickable(enabled = authState !is AuthState.Loading) { authViewModel.loginWithGoogle() },
+                    shape = RoundedCornerShape(28.dp),
+                    color = Color.Black
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        // Official Google 'G' Icon Placeholder
                         Text(
-                            "Log In",
-                            color = MangoYellow,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            modifier = Modifier.clickable { isLoginMode = true }
+                            "G",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 20.sp,
+                            color = Color.White,
+                            modifier = Modifier.padding(end = 12.dp)
                         )
+                        Text("Continue with Google", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
                     }
                 }
 
                 if (authState is AuthState.Loading) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     CircularProgressIndicator(color = Color.Black, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
                 }
             }
@@ -248,31 +246,5 @@ fun DecorativeBackground() {
                 .rotate(10f),
             tint = MangoYellow.copy(alpha = 0.15f)
         )
-    }
-}
-
-@Composable
-fun AuthMethodCard(
-    text: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(28.dp),
-        color = Color.Black
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(text, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
-        }
     }
 }

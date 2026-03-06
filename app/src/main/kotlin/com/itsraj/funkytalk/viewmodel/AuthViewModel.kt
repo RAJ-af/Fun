@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.data.repository.AuthRepository
+import io.github.jan.supabase.exceptions.RestException
+import io.github.jan.supabase.auth.exception.AuthRestException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -14,6 +16,7 @@ sealed class AuthState {
     object Authenticated : AuthState()
     object ProfileIncomplete : AuthState()
     object Unauthenticated : AuthState()
+    data class Success(val message: String) : AuthState()
     data class Error(val message: String) : AuthState()
 }
 
@@ -48,44 +51,42 @@ class AuthViewModel(
         }
     }
 
+    fun continueWithEmail(email: String, pass: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                // Try Login
+                val user = repository.login(email, pass)
+                if (user != null) {
+                    checkUserStatus()
+                }
+            } catch (loginError: Exception) {
+                // If login fails, we attempt signup.
+                // If signup fails because the user already exists, then the password was wrong.
+                try {
+                    val newUser = repository.signup(email, pass)
+                    if (newUser != null) {
+                        _authState.value = AuthState.Success("Account created successfully")
+                        checkUserStatus()
+                    }
+                } catch (signUpError: Exception) {
+                    val signUpMessage = signUpError.message ?: ""
+                    if (signUpMessage.contains("User already registered", ignoreCase = true)) {
+                        _authState.value = AuthState.Error("Incorrect password")
+                    } else {
+                        _authState.value = AuthState.Error("Could not create account. Use at least 6 characters for password.")
+                    }
+                }
+            }
+        }
+    }
+
     fun loginWithGoogle() {
         viewModelScope.launch {
             try {
                 repository.loginWithGoogle()
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Google login failed")
-            }
-        }
-    }
-
-    fun login(email: String, pass: String) {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            try {
-                val user = repository.login(email, pass)
-                if (user != null) {
-                    checkUserStatus()
-                } else {
-                    _authState.value = AuthState.Error("Login failed")
-                }
-            } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Unknown error")
-            }
-        }
-    }
-
-    fun signup(email: String, pass: String) {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            try {
-                val user = repository.signup(email, pass)
-                if (user != null) {
-                    _authState.value = AuthState.ProfileIncomplete
-                } else {
-                    _authState.value = AuthState.Error("Signup failed")
-                }
-            } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Unknown error")
+                _authState.value = AuthState.Error("Google login failed")
             }
         }
     }
@@ -98,7 +99,7 @@ class AuthViewModel(
                 _userProfile.value = profile
                 _authState.value = AuthState.Authenticated
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Failed to save profile")
+                _authState.value = AuthState.Error("Failed to save profile")
             }
         }
     }
