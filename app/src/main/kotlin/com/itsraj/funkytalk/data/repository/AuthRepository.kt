@@ -1,13 +1,16 @@
 package com.itsraj.funkytalk.data.repository
 
 import com.itsraj.funkytalk.FunkyTalkApp
+import com.itsraj.funkytalk.data.model.UserHobby
+import com.itsraj.funkytalk.data.model.UserLanguage
 import com.itsraj.funkytalk.data.model.UserProfile
-import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
@@ -31,8 +34,42 @@ class AuthRepository {
         }
     }
 
+    suspend fun updateProfile(profile: UserProfile) {
+        supabase.postgrest["profiles"].update(profile) {
+            filter {
+                eq("id", profile.id)
+            }
+        }
+    }
+
     suspend fun saveProfile(profile: UserProfile) {
         supabase.postgrest["profiles"].upsert(profile)
+    }
+
+    suspend fun uploadAvatar(userId: String, bytes: ByteArray): String {
+        val fileName = "$userId/${System.currentTimeMillis()}.png"
+        val bucket = supabase.storage.from("avatars")
+        bucket.upload(fileName, bytes) {
+            upsert = true
+        }
+        return bucket.publicUrl(fileName)
+    }
+
+    suspend fun isUsernameUnique(username: String): Boolean {
+        val response = supabase.postgrest["profiles"].select {
+            filter {
+                eq("username", username)
+            }
+        }.decodeList<UserProfile>()
+        return response.isEmpty()
+    }
+
+    suspend fun addUserLanguages(languages: List<UserLanguage>) {
+        supabase.postgrest["user_languages"].insert(languages)
+    }
+
+    suspend fun addUserHobbies(hobbies: List<UserHobby>) {
+        supabase.postgrest["user_hobbies"].insert(hobbies)
     }
 
     suspend fun login(email: String, pass: String): UserInfo? {
@@ -65,7 +102,6 @@ class AuthRepository {
 
     private suspend fun createInitialProfileRow(user: UserInfo) {
         try {
-            // Check if profile exists first to avoid overwriting existing data with empty strings
             val existing = getProfile(user.id)
             if (existing == null) {
                 val profile = UserProfile(

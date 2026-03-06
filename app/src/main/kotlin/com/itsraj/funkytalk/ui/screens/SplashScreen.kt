@@ -43,7 +43,7 @@ fun SplashScreen(
                 }
             }
             is AuthState.ProfileIncomplete -> {
-                navController.navigate(Screen.ProfileSetup.route) {
+                navController.navigate(Screen.Onboarding.route) {
                     popUpTo(Screen.Splash.route) { inclusive = true }
                 }
             }

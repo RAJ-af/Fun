@@ -2,6 +2,8 @@ package com.itsraj.funkytalk.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.itsraj.funkytalk.data.model.UserHobby
+import com.itsraj.funkytalk.data.model.UserLanguage
 import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.data.repository.AuthRepository
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -45,9 +47,7 @@ class AuthViewModel(
                     is SessionStatus.NotAuthenticated -> {
                         _authState.value = AuthState.Unauthenticated
                     }
-                    else -> {
-                        // Maintain current state for Loading/Refreshing
-                    }
+                    else -> {}
                 }
             }
         }
@@ -60,7 +60,8 @@ class AuthViewModel(
                 _authState.value = AuthState.Unauthenticated
             } else {
                 val profile = repository.getProfile(user.id)
-                if (profile == null) {
+                if (profile == null || !profile.is_profile_completed) {
+                    _userProfile.value = profile
                     _authState.value = AuthState.ProfileIncomplete
                 } else {
                     _userProfile.value = profile
@@ -74,14 +75,11 @@ class AuthViewModel(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                // Try Login
                 val user = repository.login(email, pass)
                 if (user != null) {
                     checkUserStatus()
                 }
             } catch (loginError: Exception) {
-                // If login fails, we attempt signup.
-                // If signup fails because the user already exists, then the password was wrong.
                 try {
                     val newUser = repository.signup(email, pass)
                     if (newUser != null) {
@@ -105,20 +103,122 @@ class AuthViewModel(
             try {
                 repository.loginWithGoogle()
             } catch (e: Exception) {
-                _authState.value = AuthState.Error("Google login failed")
+                _authState.value = AuthState.Error(e.message ?: "Google login failed")
             }
         }
     }
 
-    fun saveProfile(profile: UserProfile) {
+    // Onboarding methods
+    fun saveBasicProfile(username: String, profileName: String, avatarBytes: ByteArray?) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                repository.saveProfile(profile)
-                _userProfile.value = profile
+                val user = repository.currentUser ?: return@launch
+                var avatarUrl: String? = null
+                if (avatarBytes != null) {
+                    avatarUrl = repository.uploadAvatar(user.id, avatarBytes)
+                }
+
+                if (!repository.isUsernameUnique(username)) {
+                    _authState.value = AuthState.Error("Username already taken")
+                    return@launch
+                }
+
+                val currentProfile = _userProfile.value ?: UserProfile(id = user.id, email = user.email ?: "")
+                val updatedProfile = currentProfile.copy(
+                    username = username,
+                    profile_name = profileName,
+                    avatar_url = avatarUrl
+                )
+                repository.updateProfile(updatedProfile)
+                _userProfile.value = updatedProfile
+                _authState.value = AuthState.Success("Step 1 complete")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Failed to save profile")
+            }
+        }
+    }
+
+    fun saveAge(age: Int) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val profile = _userProfile.value ?: return@launch
+                val updated = profile.copy(age = age)
+                repository.updateProfile(updated)
+                _userProfile.value = updated
+                _authState.value = AuthState.Success("Step 2 complete")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Failed to save age")
+            }
+        }
+    }
+
+    fun saveGender(gender: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val profile = _userProfile.value ?: return@launch
+                val updated = profile.copy(gender = gender)
+                repository.updateProfile(updated)
+                _userProfile.value = updated
+                _authState.value = AuthState.Success("Step 3 complete")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Failed to save gender")
+            }
+        }
+    }
+
+    fun saveNativeLanguages(languages: List<String>) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val user = repository.currentUser ?: return@launch
+                val userLanguages = languages.map { UserLanguage(user_id = user.id, language = it, type = "native") }
+                repository.addUserLanguages(userLanguages)
+                _authState.value = AuthState.Success("Step 4 complete")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Failed to save languages")
+            }
+        }
+    }
+
+    fun saveLearningLanguagesAndCountry(languages: List<String>, country: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val user = repository.currentUser ?: return@launch
+                val userLanguages = languages.map { UserLanguage(user_id = user.id, language = it, type = "learning") }
+                repository.addUserLanguages(userLanguages)
+
+                val profile = _userProfile.value ?: return@launch
+                val updated = profile.copy(country = country)
+                repository.updateProfile(updated)
+                _userProfile.value = updated
+
+                _authState.value = AuthState.Success("Step 5 complete")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Failed to save data")
+            }
+        }
+    }
+
+    fun saveHobbies(hobbies: List<String>) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val user = repository.currentUser ?: return@launch
+                val userHobbies = hobbies.map { UserHobby(user_id = user.id, hobby = it) }
+                repository.addUserHobbies(userHobbies)
+
+                val profile = _userProfile.value ?: return@launch
+                val finalProfile = profile.copy(is_profile_completed = true)
+                repository.updateProfile(finalProfile)
+                _userProfile.value = finalProfile
+
                 _authState.value = AuthState.Authenticated
             } catch (e: Exception) {
-                _authState.value = AuthState.Error("Failed to save profile")
+                _authState.value = AuthState.Error(e.message ?: "Failed to complete onboarding")
             }
         }
     }
