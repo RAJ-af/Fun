@@ -2,11 +2,13 @@ package com.itsraj.funkytalk.data.repository
 
 import com.itsraj.funkytalk.FunkyTalkApp
 import com.itsraj.funkytalk.data.model.UserProfile
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
 class AuthRepository {
@@ -14,6 +16,7 @@ class AuthRepository {
     private val auth = supabase.auth
 
     val currentUser: UserInfo? get() = auth.currentUserOrNull()
+    val sessionStatus: Flow<SessionStatus> = auth.sessionStatus
 
     suspend fun getProfile(id: String): UserProfile? {
         return try {
