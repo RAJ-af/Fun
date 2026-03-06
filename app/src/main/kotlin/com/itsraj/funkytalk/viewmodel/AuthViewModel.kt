@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.data.repository.AuthRepository
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.auth.exception.AuthRestException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,25 @@ class AuthViewModel(
     val userProfile = _userProfile.asStateFlow()
 
     init {
-        checkUserStatus()
+        observeSession()
+    }
+
+    private fun observeSession() {
+        viewModelScope.launch {
+            repository.sessionStatus.collect { status ->
+                when (status) {
+                    is SessionStatus.Authenticated -> {
+                        checkUserStatus()
+                    }
+                    is SessionStatus.NotAuthenticated -> {
+                        _authState.value = AuthState.Unauthenticated
+                    }
+                    else -> {
+                        // Maintain current state for Loading/Refreshing
+                    }
+                }
+            }
+        }
     }
 
     fun checkUserStatus() {
