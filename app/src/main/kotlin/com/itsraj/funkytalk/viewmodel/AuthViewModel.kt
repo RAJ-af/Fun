@@ -6,8 +6,12 @@ import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.data.repository.AuthRepository
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.exception.AuthRestException
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 sealed class AuthState {
@@ -30,8 +34,45 @@ class AuthViewModel(
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile = _userProfile.asStateFlow()
 
+    private val _usernameAvailable = MutableStateFlow<Boolean?>(null)
+    val usernameAvailable = _usernameAvailable.asStateFlow()
+
+    private val _usernameQuery = MutableStateFlow("")
+
     init {
         observeSession()
+        observeUsernameQuery()
+    }
+
+    @OptIn(FlowPreview::class)
+    private fun observeUsernameQuery() {
+        viewModelScope.launch {
+            _usernameQuery
+                .debounce(500)
+                .distinctUntilChanged()
+                .filter { it.length >= 3 }
+                .collect { query ->
+                    checkUsername(query)
+                }
+        }
+    }
+
+    fun onUsernameChange(username: String) {
+        _usernameQuery.value = username
+        if (username.length < 3) {
+            _usernameAvailable.value = null
+        }
+    }
+
+    private fun checkUsername(username: String) {
+        viewModelScope.launch {
+            try {
+                val isUnique = repository.isUsernameUnique(username)
+                _usernameAvailable.value = isUnique
+            } catch (e: Exception) {
+                _usernameAvailable.value = null
+            }
+        }
     }
 
     private fun observeSession() {
@@ -70,6 +111,19 @@ class AuthViewModel(
         }
     }
 
+    private fun mapError(error: Throwable, default: String): String {
+        val message = error.message ?: return default
+        return when {
+            message.contains("profiles_username_key", ignoreCase = true) -> "Username already taken. Try another one."
+            message.contains("User already registered", ignoreCase = true) -> "User already registered."
+            message.contains("Invalid login credentials", ignoreCase = true) -> "Invalid email or password."
+            message.contains("Email not confirmed", ignoreCase = true) -> "Please confirm your email address."
+            message.contains("network", ignoreCase = true) -> "Network error. Please check your connection."
+            message.contains("Database error saving new user", ignoreCase = true) -> "Error creating your profile. Please try again."
+            else -> default
+        }
+    }
+
     fun continueWithEmail(email: String, pass: String) {
         if (pass.length < 6) {
             _authState.value = AuthState.Error("Password must be at least 6 characters")
@@ -91,10 +145,10 @@ class AuthViewModel(
                         repository.login(email, pass)
                         checkUserStatus()
                     } catch (loginError: Exception) {
-                        _authState.value = AuthState.Error(loginError.message ?: "Login failed")
+                        _authState.value = AuthState.Error(mapError(loginError, "Login failed"))
                     }
                 } else {
-                    _authState.value = AuthState.Error(signUpError.message ?: "Signup failed")
+                    _authState.value = AuthState.Error(mapError(signUpError, "Signup failed"))
                 }
             }
         }
@@ -116,13 +170,19 @@ class AuthViewModel(
             _authState.value = AuthState.Loading
             try {
                 val user = repository.currentUser ?: return@launch
+
+                if (_usernameAvailable.value == false) {
+                    _authState.value = AuthState.Error("Username already taken. Try another one.")
+                    return@launch
+                }
+
                 var avatarUrl: String? = null
                 if (avatarBytes != null) {
                     avatarUrl = repository.uploadAvatar(user.id, avatarBytes)
                 }
 
                 if (!repository.isUsernameUnique(username)) {
-                    _authState.value = AuthState.Error("Username already taken")
+                    _authState.value = AuthState.Error("Username already taken. Try another one.")
                     return@launch
                 }
 
@@ -136,7 +196,7 @@ class AuthViewModel(
                 _userProfile.value = updatedProfile
                 _authState.value = AuthState.Success("Step 1 complete")
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Failed to save profile")
+                _authState.value = AuthState.Error(mapError(e, "Failed to save profile"))
             }
         }
     }
@@ -151,7 +211,7 @@ class AuthViewModel(
                 _userProfile.value = updated
                 _authState.value = AuthState.Success("Step 2 complete")
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Failed to save age")
+                _authState.value = AuthState.Error(mapError(e, "Failed to save age"))
             }
         }
     }
@@ -166,7 +226,7 @@ class AuthViewModel(
                 _userProfile.value = updated
                 _authState.value = AuthState.Success("Step 3 complete")
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Failed to save gender")
+                _authState.value = AuthState.Error(mapError(e, "Failed to save gender"))
             }
         }
     }
@@ -181,7 +241,7 @@ class AuthViewModel(
                 _userProfile.value = updated
                 _authState.value = AuthState.Success("Step 4 complete")
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Failed to save languages")
+                _authState.value = AuthState.Error(mapError(e, "Failed to save languages"))
             }
         }
     }
@@ -199,7 +259,7 @@ class AuthViewModel(
                 _userProfile.value = updated
                 _authState.value = AuthState.Success("Step 5 complete")
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Failed to save data")
+                _authState.value = AuthState.Error(mapError(e, "Failed to save data"))
             }
         }
     }
@@ -217,7 +277,7 @@ class AuthViewModel(
                 _userProfile.value = finalProfile
                 _authState.value = AuthState.Authenticated
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Failed to complete onboarding")
+                _authState.value = AuthState.Error(mapError(e, "Failed to complete onboarding"))
             }
         }
     }

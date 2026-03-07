@@ -42,7 +42,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.itsraj.funkytalk.data.model.Language
+import com.itsraj.funkytalk.data.model.allLanguages
 import com.itsraj.funkytalk.ui.components.GenderIconButton
+import com.itsraj.funkytalk.ui.components.LanguageBadge
 import com.itsraj.funkytalk.ui.components.ModernLanguageChip
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
@@ -155,6 +158,7 @@ fun Step1BasicInfo(navController: NavController, viewModel: AuthViewModel) {
     val context = LocalContext.current
 
     val authState by viewModel.authState.collectAsState()
+    val usernameAvailable by viewModel.usernameAvailable.collectAsState()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -212,9 +216,30 @@ fun Step1BasicInfo(navController: NavController, viewModel: AuthViewModel) {
 
         PremiumTextField(
             value = username,
-            onValueChange = { username = it },
-            label = "Username"
+            onValueChange = {
+                username = it
+                viewModel.onUsernameChange(it)
+            },
+            label = "Username",
+            trailingIcon = {
+                if (username.length >= 3) {
+                    when (usernameAvailable) {
+                        true -> Icon(Icons.Default.Check, "Available", tint = Color.Green)
+                        false -> Icon(Icons.Default.Close, "Taken", tint = Color.Red)
+                        null -> CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MangoYellow)
+                    }
+                }
+            }
         )
+
+        if (username.length >= 3 && usernameAvailable == false) {
+            Text(
+                "Username already taken. Try another one.",
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.align(Alignment.Start).padding(start = 16.dp, top = 4.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -238,7 +263,7 @@ fun Step1BasicInfo(navController: NavController, viewModel: AuthViewModel) {
                 }
                 viewModel.saveBasicProfile(username, name, bytes)
             },
-            enabled = username.isNotBlank() && name.isNotBlank() && authState !is AuthState.Loading,
+            enabled = username.isNotBlank() && name.isNotBlank() && usernameAvailable == true && authState !is AuthState.Loading,
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
         )
     }
@@ -353,41 +378,18 @@ fun Step3Gender(navController: NavController, viewModel: AuthViewModel) {
     }
 }
 
-data class LanguageOption(val name: String, val flag: String)
-
-val globalLanguages = listOf(
-    LanguageOption("English", "🇺🇸"),
-    LanguageOption("Hindi", "🇮🇳"),
-    LanguageOption("Spanish", "🇪🇸"),
-    LanguageOption("French", "🇫🇷"),
-    LanguageOption("German", "🇩🇪"),
-    LanguageOption("Chinese", "🇨🇳"),
-    LanguageOption("Japanese", "🇯🇵"),
-    LanguageOption("Korean", "🇰🇷"),
-    LanguageOption("Arabic", "🇸🇦"),
-    LanguageOption("Russian", "🇷🇺"),
-    LanguageOption("Portuguese", "🇵🇹"),
-    LanguageOption("Italian", "🇮🇹"),
-    LanguageOption("Turkish", "🇹🇷"),
-    LanguageOption("Dutch", "🇳🇱"),
-    LanguageOption("Polish", "🇵🇱"),
-    LanguageOption("Thai", "🇹🇭"),
-    LanguageOption("Vietnamese", "🇻🇳"),
-    LanguageOption("Indonesian", "🇮🇩"),
-    LanguageOption("Persian", "🇮🇷"),
-    LanguageOption("Bengali", "🇧🇩"),
-    LanguageOption("Urdu", "🇵🇰"),
-    LanguageOption("Punjabi", "🇮🇳"),
-    LanguageOption("Tamil", "🇮🇳"),
-    LanguageOption("Telugu", "🇮🇳"),
-    LanguageOption("Marathi", "🇮🇳"),
-    LanguageOption("Gujarati", "🇮🇳")
-)
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel) {
     val selectedLanguages = remember { mutableStateListOf<String>() }
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredLanguages = remember(searchQuery) {
+        allLanguages.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.code.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -399,7 +401,7 @@ fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel)
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -413,7 +415,15 @@ fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel)
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        PremiumTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = "Search languages..."
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             FlowRow(
@@ -423,11 +433,12 @@ fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel)
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                globalLanguages.forEach { lang ->
+                filteredLanguages.forEach { lang ->
                     val isSelected = selectedLanguages.contains(lang.name)
                     ModernLanguageChip(
                         text = lang.name,
                         flag = lang.flag,
+                        code = lang.code,
                         isSelected = isSelected,
                         onClick = {
                             if (isSelected) selectedLanguages.remove(lang.name)
@@ -453,6 +464,14 @@ fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel)
 @Composable
 fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewModel) {
     val selectedLanguages = remember { mutableStateListOf<String>() }
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredLanguages = remember(searchQuery) {
+        allLanguages.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.code.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
     var country by remember { mutableStateOf("") }
     val authState by viewModel.authState.collectAsState()
 
@@ -465,7 +484,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -481,7 +500,15 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Box(modifier = Modifier.weight(0.6f).fillMaxWidth()) {
+        PremiumTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = "Search languages..."
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Box(modifier = Modifier.weight(0.5f).fillMaxWidth()) {
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -489,11 +516,12 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                globalLanguages.forEach { lang ->
+                filteredLanguages.forEach { lang ->
                     val isSelected = selectedLanguages.contains(lang.name)
                     ModernLanguageChip(
                         text = lang.name,
                         flag = lang.flag,
+                        code = lang.code,
                         isSelected = isSelected,
                         onClick = {
                             if (isSelected) selectedLanguages.remove(lang.name)
@@ -504,7 +532,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
             text = "Where are you from?",
@@ -513,7 +541,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             modifier = Modifier.align(Alignment.Start)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         PremiumTextField(
             value = country,
@@ -521,7 +549,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             label = "Country"
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         PremiumButton(
             text = "Next Step",
