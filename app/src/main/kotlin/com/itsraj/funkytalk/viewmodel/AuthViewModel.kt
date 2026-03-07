@@ -2,12 +2,9 @@ package com.itsraj.funkytalk.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.itsraj.funkytalk.data.model.UserHobby
-import com.itsraj.funkytalk.data.model.UserLanguage
 import com.itsraj.funkytalk.data.model.UserProfile
 import com.itsraj.funkytalk.data.repository.AuthRepository
 import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.auth.exception.AuthRestException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,6 +72,7 @@ class AuthViewModel(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
+                // Try Login
                 val user = repository.login(email, pass)
                 if (user != null) {
                     checkUserStatus()
@@ -124,7 +122,7 @@ class AuthViewModel(
                     return@launch
                 }
 
-                val currentProfile = _userProfile.value ?: UserProfile(id = user.id, email = user.email ?: "")
+                val currentProfile = _userProfile.value ?: UserProfile(auth_user_id = user.id, email = user.email ?: "")
                 val updatedProfile = currentProfile.copy(
                     username = username,
                     profile_name = profileName,
@@ -173,9 +171,10 @@ class AuthViewModel(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val user = repository.currentUser ?: return@launch
-                val userLanguages = languages.map { UserLanguage(user_id = user.id, language = it, type = "native") }
-                repository.addUserLanguages(userLanguages)
+                val profile = _userProfile.value ?: return@launch
+                val updated = profile.copy(native_languages = languages)
+                repository.updateProfile(updated)
+                _userProfile.value = updated
                 _authState.value = AuthState.Success("Step 4 complete")
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Failed to save languages")
@@ -187,15 +186,13 @@ class AuthViewModel(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val user = repository.currentUser ?: return@launch
-                val userLanguages = languages.map { UserLanguage(user_id = user.id, language = it, type = "learning") }
-                repository.addUserLanguages(userLanguages)
-
                 val profile = _userProfile.value ?: return@launch
-                val updated = profile.copy(country = country)
+                val updated = profile.copy(
+                    learning_languages = languages,
+                    country = country
+                )
                 repository.updateProfile(updated)
                 _userProfile.value = updated
-
                 _authState.value = AuthState.Success("Step 5 complete")
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Failed to save data")
@@ -207,15 +204,13 @@ class AuthViewModel(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val user = repository.currentUser ?: return@launch
-                val userHobbies = hobbies.map { UserHobby(user_id = user.id, hobby = it) }
-                repository.addUserHobbies(userHobbies)
-
                 val profile = _userProfile.value ?: return@launch
-                val finalProfile = profile.copy(is_profile_completed = true)
+                val finalProfile = profile.copy(
+                    hobbies = hobbies,
+                    is_profile_completed = true
+                )
                 repository.updateProfile(finalProfile)
                 _userProfile.value = finalProfile
-
                 _authState.value = AuthState.Authenticated
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Failed to complete onboarding")
