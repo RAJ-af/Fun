@@ -197,9 +197,34 @@ fun VerticalWheelPicker(
 }
 
 @Composable
+fun LanguageBadge(
+    code: String,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = Color(0xFFE3F2FD),
+    textColor: Color = Color(0xFF1976D2)
+) {
+    Surface(
+        color = backgroundColor,
+        shape = RoundedCornerShape(6.dp),
+        modifier = modifier
+    ) {
+        Text(
+            text = code.uppercase(),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Black,
+                fontSize = 10.sp
+            ),
+            color = textColor
+        )
+    }
+}
+
+@Composable
 fun ModernLanguageChip(
     text: String,
     flag: String,
+    code: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -224,7 +249,11 @@ fun ModernLanguageChip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text(flag, fontSize = 18.sp)
+            LanguageBadge(
+                code = code,
+                backgroundColor = if (isSelected) Color.Black.copy(alpha = 0.1f) else Color.White,
+                textColor = if (isSelected) Color.Black else Color.Black.copy(alpha = 0.5f)
+            )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = text,
@@ -232,6 +261,8 @@ fun ModernLanguageChip(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 fontSize = 14.sp
             )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(flag, fontSize = 16.sp)
         }
     }
 }
