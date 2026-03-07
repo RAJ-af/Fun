@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.ktor.client.android)
 
     implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

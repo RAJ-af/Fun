@@ -4,12 +4,17 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +32,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.util.lerp
+import kotlin.math.absoluteValue
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -42,8 +50,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 import com.itsraj.funkytalk.data.model.Language
 import com.itsraj.funkytalk.data.model.allLanguages
+import com.itsraj.funkytalk.data.model.allCountries
 import com.itsraj.funkytalk.ui.components.GenderIconButton
 import com.itsraj.funkytalk.ui.components.LanguageBadge
 import com.itsraj.funkytalk.ui.components.ModernLanguageChip
@@ -463,6 +474,7 @@ fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewModel) {
+    val context = LocalContext.current
     val selectedLanguages = remember { mutableStateListOf<String>() }
     var searchQuery by remember { mutableStateOf("") }
     val filteredLanguages = remember(searchQuery) {
@@ -472,7 +484,19 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
         }
     }
 
-    var country by remember { mutableStateOf("") }
+    // Country Selection logic
+    val deviceCountryCode = remember {
+        context.resources.configuration.locales[0].country.lowercase()
+    }
+
+    val initialCountryIndex = remember {
+        val index = allCountries.indexOfFirst { it.code == deviceCountryCode }
+        if (index != -1) index else allCountries.indexOfFirst { it.code == "us" }.coerceAtLeast(0)
+    }
+
+    val pagerState = rememberPagerState(initialPage = initialCountryIndex) { allCountries.size }
+    val selectedCountry = allCountries[pagerState.currentPage]
+
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -498,7 +522,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         PremiumTextField(
             value = searchQuery,
@@ -506,9 +530,9 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             label = "Search languages..."
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Box(modifier = Modifier.weight(0.5f).fillMaxWidth()) {
+        Box(modifier = Modifier.weight(0.4f).fillMaxWidth()) {
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -541,20 +565,85 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             modifier = Modifier.align(Alignment.Start)
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        PremiumTextField(
-            value = country,
-            onValueChange = { country = it },
-            label = "Country"
-        )
-
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Flag Carousel
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = (LocalContext.current.resources.displayMetrics.widthPixels / (3 * context.resources.displayMetrics.density)).dp),
+                pageSpacing = 16.dp
+            ) { page ->
+                val country = allCountries[page]
+                val isSelected = page == pagerState.currentPage
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            val pageOffset = (
+                                (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                            ).absoluteValue
+
+                            alpha = lerp(
+                                start = 0.4f,
+                                stop = 1f,
+                                fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                            )
+
+                            scaleX = lerp(
+                                start = 0.8f,
+                                stop = 1.2f,
+                                fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                            )
+                            scaleY = lerp(
+                                start = 0.8f,
+                                stop = 1.2f,
+                                fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                            )
+                        }
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data("https://hatscripts.github.io/circle-flags/flags/${country.code}.svg")
+                            .decoderFactory(SvgDecoder.Factory())
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = country.name,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .border(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = if (isSelected) MangoYellow else Color.Transparent,
+                                shape = CircleShape
+                            )
+                    )
+
+                    if (isSelected) {
+                        Text(
+                            text = country.name,
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                            modifier = Modifier.padding(top = 8.dp),
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         PremiumButton(
             text = "Next Step",
-            onClick = { viewModel.saveLearningLanguagesAndCountry(selectedLanguages.toList(), country) },
-            enabled = selectedLanguages.isNotEmpty() && country.isNotBlank() && authState !is AuthState.Loading,
+            onClick = { viewModel.saveLearningLanguagesAndCountry(selectedLanguages.toList(), selectedCountry.name) },
+            enabled = selectedLanguages.isNotEmpty() && authState !is AuthState.Loading,
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
         )
     }
@@ -566,6 +655,12 @@ fun Step6Hobbies(navController: NavController, viewModel: AuthViewModel) {
     var hobbyInput by remember { mutableStateOf("") }
     val hobbies = remember { mutableStateListOf<String>() }
     val authState by viewModel.authState.collectAsState()
+
+    val suggestedHobbies = listOf(
+        "gaming", "music", "movies", "football", "anime",
+        "travel", "photography", "reading", "fitness",
+        "coding", "basketball", "drawing"
+    )
 
     Column(
         modifier = Modifier
@@ -585,7 +680,7 @@ fun Step6Hobbies(navController: NavController, viewModel: AuthViewModel) {
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         PremiumTextField(
             value = hobbyInput,
@@ -593,7 +688,7 @@ fun Step6Hobbies(navController: NavController, viewModel: AuthViewModel) {
             label = "Add a hobby...",
             trailingIcon = {
                 IconButton(onClick = {
-                    if (hobbyInput.isNotBlank()) {
+                    if (hobbyInput.isNotBlank() && !hobbies.contains(hobbyInput)) {
                         hobbies.add(hobbyInput)
                         hobbyInput = ""
                     }
@@ -605,35 +700,87 @@ fun Step6Hobbies(navController: NavController, viewModel: AuthViewModel) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        Text(
+            text = "Suggested Hobbies",
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+            color = Color.Black.copy(alpha = 0.6f),
+            modifier = Modifier.align(Alignment.Start).padding(bottom = 12.dp)
+        )
+
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            hobbies.forEach { hobby ->
-                Surface(
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MangoYellow.copy(alpha = 0.1f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MangoYellow)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+            suggestedHobbies.forEach { hobby ->
+                val isSelected = hobbies.contains(hobby)
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        if (isSelected) hobbies.remove(hobby)
+                        else hobbies.add(hobby)
+                    },
+                    label = { Text(hobby) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MangoYellow,
+                        selectedLabelColor = Color.Black,
+                        containerColor = Color.Black.copy(alpha = 0.05f),
+                        labelColor = Color.Black.copy(alpha = 0.7f)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        borderColor = Color.Transparent,
+                        selectedBorderColor = MangoYellow,
+                        borderWidth = 1.dp,
+                        selectedBorderWidth = 1.dp,
+                        enabled = true,
+                        selected = isSelected
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        if (hobbies.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Your Hobbies",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = Color.Black.copy(alpha = 0.6f),
+                modifier = Modifier.align(Alignment.Start).padding(bottom = 12.dp)
+            )
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                hobbies.forEach { hobby ->
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MangoYellow.copy(alpha = 0.1f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MangoYellow)
                     ) {
-                        Text(hobby, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            Icons.Default.Close,
-                            null,
-                            modifier = Modifier.size(16.dp).clickable { hobbies.remove(hobby) },
-                            tint = Color.Black.copy(alpha = 0.5f)
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(hobby, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Close,
+                                null,
+                                modifier = Modifier.size(16.dp).clickable { hobbies.remove(hobby) },
+                                tint = Color.Black.copy(alpha = 0.5f)
+                            )
+                        }
                     }
                 }
             }
         }
 
         Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(32.dp))
 
         PremiumButton(
             text = "Complete Profile",
