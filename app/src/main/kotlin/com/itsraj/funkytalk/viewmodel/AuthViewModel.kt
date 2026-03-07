@@ -57,7 +57,9 @@ class AuthViewModel(
                 _authState.value = AuthState.Unauthenticated
             } else {
                 val profile = repository.getProfile(user.id)
-                if (profile == null || !profile.is_profile_completed) {
+                // Use presence of hobbies (last onboarding step) to determine completion
+                val isCompleted = profile != null && !profile.hobbies.isNullOrEmpty()
+                if (profile == null || !isCompleted) {
                     _userProfile.value = profile
                     _authState.value = AuthState.ProfileIncomplete
                 } else {

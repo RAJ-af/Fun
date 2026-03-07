@@ -1,6 +1,8 @@
 package com.itsraj.funkytalk.data.repository
 
 import com.itsraj.funkytalk.FunkyTalkApp
+import com.itsraj.funkytalk.data.model.InitialProfile
+import com.itsraj.funkytalk.data.model.ProfileUpdate
 import com.itsraj.funkytalk.data.model.UserProfile
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
@@ -10,7 +12,7 @@ import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.Flow
-import java.util.Date
+import java.time.Instant
 
 class AuthRepository {
     private val supabase = FunkyTalkApp.supabase
@@ -32,22 +34,21 @@ class AuthRepository {
     }
 
     suspend fun updateProfile(profile: UserProfile) {
-        // Only update allowed fields, filtering by auth_user_id
-        // Using a map to ensure 'id' is not sent
-        val updateMap = mutableMapOf<String, Any?>()
-        profile.username?.let { updateMap["username"] = it }
-        profile.profile_name?.let { updateMap["profile_name"] = it }
-        profile.avatar_url?.let { updateMap["avatar_url"] = it }
-        profile.age?.let { updateMap["age"] = it }
-        profile.gender?.let { updateMap["gender"] = it }
-        profile.native_languages?.let { updateMap["native_languages"] = it }
-        profile.learning_languages?.let { updateMap["learning_languages"] = it }
-        profile.country?.let { updateMap["country"] = it }
-        profile.hobbies?.let { updateMap["hobbies"] = it }
-        profile.bio?.let { updateMap["bio"] = it }
-        updateMap["last_seen"] = Date().toString()
+        val update = ProfileUpdate(
+            username = profile.username,
+            profile_name = profile.profile_name,
+            avatar_url = profile.avatar_url,
+            age = profile.age,
+            gender = profile.gender,
+            country = profile.country,
+            native_languages = profile.native_languages,
+            learning_languages = profile.learning_languages,
+            hobbies = profile.hobbies,
+            bio = profile.bio,
+            last_seen = Instant.now().toString()
+        )
 
-        supabase.postgrest["profiles"].update(updateMap) {
+        supabase.postgrest["profiles"].update(update) {
             filter {
                 eq("auth_user_id", profile.auth_user_id)
             }
@@ -55,11 +56,12 @@ class AuthRepository {
     }
 
     suspend fun insertInitialProfile(userId: String, email: String, username: String, profileName: String) {
-        val payload = mapOf(
-            "auth_user_id" to userId,
-            "username" to username,
-            "profile_name" to profileName,
-            "email" to email
+        val payload = InitialProfile(
+            auth_user_id = userId,
+            email = email,
+            username = username,
+            profile_name = profileName,
+            created_at = Instant.now().toString()
         )
         supabase.postgrest["profiles"].insert(payload)
     }
@@ -114,10 +116,10 @@ class AuthRepository {
         try {
             val existing = getProfile(user.id)
             if (existing == null) {
-                val payload = mapOf(
-                    "auth_user_id" to user.id,
-                    "email" to (user.email ?: ""),
-                    "created_at" to Date().toString()
+                val payload = InitialProfile(
+                    auth_user_id = user.id,
+                    email = user.email ?: "",
+                    created_at = Instant.now().toString()
                 )
                 supabase.postgrest["profiles"].insert(payload)
             }
