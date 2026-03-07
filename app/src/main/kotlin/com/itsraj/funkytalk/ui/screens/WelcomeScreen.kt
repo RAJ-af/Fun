@@ -1,6 +1,7 @@
 package com.itsraj.funkytalk.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -24,7 +25,12 @@ fun WelcomeScreen(navController: NavController) {
         "To have another language is to possess a second soul.",
         "Language is the road map of a culture.",
         "Learning is a treasure that will follow its owner everywhere.",
-        "Speak a new language so that the world will be a new world."
+        "Speak a new language so that the world will be a new world.",
+        "Knowledge of languages is the doorway to wisdom.",
+        "The limits of my language mean the limits of my world.",
+        "A different language is a different vision of life.",
+        "You can never understand one language until you understand at least two.",
+        "Language is the blood of the soul into which thoughts run and out of which they grow."
     )
 
     var currentQuoteIndex by remember { mutableStateOf(0) }
@@ -72,8 +78,7 @@ fun WelcomeScreen(navController: NavController) {
                 AnimatedContent(
                     targetState = quotes[currentQuoteIndex],
                     transitionSpec = {
-                        (fadeIn() + slideInVertically { it / 2 })
-                            .togetherWith(fadeOut() + slideOutVertically { -it / 2 })
+                        fadeIn(animationSpec = tween(1000)).togetherWith(fadeOut(animationSpec = tween(1000)))
                     },
                     label = "QuoteAnimation"
                 ) { quote ->
