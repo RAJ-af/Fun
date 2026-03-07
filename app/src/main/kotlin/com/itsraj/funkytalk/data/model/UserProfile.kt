@@ -4,17 +4,19 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserProfile(
-    val id: String = "",
-    val email: String = "",
+    val auth_user_id: String = "",
     val username: String? = null,
     val profile_name: String? = null,
     val avatar_url: String? = null,
     val age: Int? = null,
     val gender: String? = null,
     val country: String? = null,
-    val is_profile_completed: Boolean = false,
-    val streak: Int = 0,
-    val is_online: Boolean = false,
-    val last_active: Long = 0L,
-    val created_at: String = ""
+    val native_languages: List<String>? = null,
+    val learning_languages: List<String>? = null,
+    val hobbies: List<String>? = null,
+    val bio: String? = null,
+    val email: String? = null,
+    val last_seen: String? = null,
+    val created_at: String? = null,
+    val is_profile_completed: Boolean = false // Helper field, not in DB but used for logic
 )
