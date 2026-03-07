@@ -20,11 +20,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Female
+import androidx.compose.material.icons.filled.Male
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -39,8 +42,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.itsraj.funkytalk.ui.components.GenderIconButton
+import com.itsraj.funkytalk.ui.components.ModernLanguageChip
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
+import com.itsraj.funkytalk.ui.components.VerticalWheelPicker
 import com.itsraj.funkytalk.ui.theme.MangoYellow
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
@@ -240,7 +246,10 @@ fun Step1BasicInfo(navController: NavController, viewModel: AuthViewModel) {
 
 @Composable
 fun Step2Age(navController: NavController, viewModel: AuthViewModel) {
-    var age by remember { mutableStateOf(24f) }
+    val minAge = 13
+    val maxAge = 80
+    val ageList = (minAge..maxAge).toList()
+    var selectedIndex by remember { mutableStateOf(24 - minAge) }
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -261,32 +270,28 @@ fun Step2Age(navController: NavController, viewModel: AuthViewModel) {
             color = Color.Black
         )
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
-        Text(
-            text = age.toInt().toString(),
-            style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Black),
-            color = MangoYellow
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        Slider(
-            value = age,
-            onValueChange = { age = it },
-            valueRange = 13f..99f,
-            colors = SliderDefaults.colors(
-                thumbColor = MangoYellow,
-                activeTrackColor = MangoYellow,
-                inactiveTrackColor = Color.Black.copy(alpha = 0.05f)
+        VerticalWheelPicker(
+            count = ageList.size,
+            initialIndex = selectedIndex,
+            onIndexChanged = { selectedIndex = it },
+            itemHeight = 80.dp
+        ) { index, isSelected ->
+            Text(
+                text = ageList[index].toString(),
+                style = if (isSelected) MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Black)
+                        else MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                color = if (isSelected) MangoYellow else Color.Black.copy(alpha = 0.2f),
+                modifier = Modifier.scale(if (isSelected) 1f else 0.8f)
             )
-        )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
         PremiumButton(
             text = "Next Step",
-            onClick = { viewModel.saveAge(age.toInt()) },
+            onClick = { viewModel.saveAge(ageList[selectedIndex]) },
             enabled = authState !is AuthState.Loading,
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
         )
@@ -296,7 +301,6 @@ fun Step2Age(navController: NavController, viewModel: AuthViewModel) {
 @Composable
 fun Step3Gender(navController: NavController, viewModel: AuthViewModel) {
     var selectedGender by remember { mutableStateOf("") }
-    val options = listOf("Male", "Female", "Other", "Prefer not to say")
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -317,22 +321,25 @@ fun Step3Gender(navController: NavController, viewModel: AuthViewModel) {
             color = Color.Black
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(80.dp))
 
-        options.forEach { option ->
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-                    .clickable { selectedGender = option },
-                shape = RoundedCornerShape(20.dp),
-                color = if (selectedGender == option) MangoYellow else Color.Black.copy(alpha = 0.05f),
-                border = if (selectedGender == option) null else null
-            ) {
-                Box(modifier = Modifier.padding(24.dp), contentAlignment = Alignment.Center) {
-                    Text(option, fontWeight = FontWeight.Bold, color = Color.Black)
-                }
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            GenderIconButton(
+                icon = Icons.Default.Male,
+                label = "Male",
+                isSelected = selectedGender == "Male",
+                onClick = { selectedGender = "Male" }
+            )
+
+            GenderIconButton(
+                icon = Icons.Default.Female,
+                label = "Female",
+                isSelected = selectedGender == "Female",
+                onClick = { selectedGender = "Female" }
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -346,9 +353,40 @@ fun Step3Gender(navController: NavController, viewModel: AuthViewModel) {
     }
 }
 
+data class LanguageOption(val name: String, val flag: String)
+
+val globalLanguages = listOf(
+    LanguageOption("English", "🇺🇸"),
+    LanguageOption("Hindi", "🇮🇳"),
+    LanguageOption("Spanish", "🇪🇸"),
+    LanguageOption("French", "🇫🇷"),
+    LanguageOption("German", "🇩🇪"),
+    LanguageOption("Chinese", "🇨🇳"),
+    LanguageOption("Japanese", "🇯🇵"),
+    LanguageOption("Korean", "🇰🇷"),
+    LanguageOption("Arabic", "🇸🇦"),
+    LanguageOption("Russian", "🇷🇺"),
+    LanguageOption("Portuguese", "🇵🇹"),
+    LanguageOption("Italian", "🇮🇹"),
+    LanguageOption("Turkish", "🇹🇷"),
+    LanguageOption("Dutch", "🇳🇱"),
+    LanguageOption("Polish", "🇵🇱"),
+    LanguageOption("Thai", "🇹🇭"),
+    LanguageOption("Vietnamese", "🇻🇳"),
+    LanguageOption("Indonesian", "🇮🇩"),
+    LanguageOption("Persian", "🇮🇷"),
+    LanguageOption("Bengali", "🇧🇩"),
+    LanguageOption("Urdu", "🇵🇰"),
+    LanguageOption("Punjabi", "🇮🇳"),
+    LanguageOption("Tamil", "🇮🇳"),
+    LanguageOption("Telugu", "🇮🇳"),
+    LanguageOption("Marathi", "🇮🇳"),
+    LanguageOption("Gujarati", "🇮🇳")
+)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel) {
-    val languages = listOf("English", "Spanish", "French", "German", "Chinese", "Japanese", "Korean", "Russian", "Arabic")
     val selectedLanguages = remember { mutableStateListOf<String>() }
     val authState by viewModel.authState.collectAsState()
 
@@ -375,32 +413,32 @@ fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel)
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            languages.forEach { lang ->
-                val isSelected = selectedLanguages.contains(lang)
-                FilterChip(
-                    selected = isSelected,
-                    onClick = {
-                        if (isSelected) selectedLanguages.remove(lang)
-                        else if (selectedLanguages.size < 2) selectedLanguages.add(lang)
-                    },
-                    label = { Text(lang) },
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MangoYellow,
-                        containerColor = Color.Black.copy(alpha = 0.05f)
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                globalLanguages.forEach { lang ->
+                    val isSelected = selectedLanguages.contains(lang.name)
+                    ModernLanguageChip(
+                        text = lang.name,
+                        flag = lang.flag,
+                        isSelected = isSelected,
+                        onClick = {
+                            if (isSelected) selectedLanguages.remove(lang.name)
+                            else if (selectedLanguages.size < 2) selectedLanguages.add(lang.name)
+                        }
                     )
-                )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         PremiumButton(
             text = "Next Step",
@@ -414,7 +452,6 @@ fun Step4NativeLanguages(navController: NavController, viewModel: AuthViewModel)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewModel) {
-    val languages = listOf("English", "Spanish", "French", "German", "Chinese", "Japanese", "Korean", "Russian", "Arabic")
     val selectedLanguages = remember { mutableStateListOf<String>() }
     var country by remember { mutableStateOf("") }
     val authState by viewModel.authState.collectAsState()
@@ -428,8 +465,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -443,32 +479,32 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            languages.forEach { lang ->
-                val isSelected = selectedLanguages.contains(lang)
-                FilterChip(
-                    selected = isSelected,
-                    onClick = {
-                        if (isSelected) selectedLanguages.remove(lang)
-                        else if (selectedLanguages.size < 3) selectedLanguages.add(lang)
-                    },
-                    label = { Text(lang) },
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MangoYellow,
-                        containerColor = Color.Black.copy(alpha = 0.05f)
+        Box(modifier = Modifier.weight(0.6f).fillMaxWidth()) {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                globalLanguages.forEach { lang ->
+                    val isSelected = selectedLanguages.contains(lang.name)
+                    ModernLanguageChip(
+                        text = lang.name,
+                        flag = lang.flag,
+                        isSelected = isSelected,
+                        onClick = {
+                            if (isSelected) selectedLanguages.remove(lang.name)
+                            else if (selectedLanguages.size < 3) selectedLanguages.add(lang.name)
+                        }
                     )
-                )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = "Where are you from?",
@@ -477,7 +513,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             modifier = Modifier.align(Alignment.Start)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         PremiumTextField(
             value = country,
@@ -485,7 +521,7 @@ fun Step5LearningLanguages(navController: NavController, viewModel: AuthViewMode
             label = "Country"
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         PremiumButton(
             text = "Next Step",
