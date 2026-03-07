@@ -1,5 +1,6 @@
 package com.itsraj.funkytalk.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +16,9 @@ import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -51,21 +54,21 @@ fun FunkyBottomNavigation(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
+                .height(80.dp)
                 .shadow(
-                    elevation = 12.dp,
-                    shape = RoundedCornerShape(36.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.2f),
-                    spotColor = Color.Black.copy(alpha = 0.2f)
+                    elevation = 20.dp,
+                    shape = RoundedCornerShape(40.dp),
+                    ambientColor = Color.Black,
+                    spotColor = Color.Black
                 ),
-            shape = RoundedCornerShape(36.dp),
-            color = Color.White
+            shape = RoundedCornerShape(40.dp),
+            color = Color(0xFF222222).copy(alpha = 0.95f) // Dark glass effect
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -75,32 +78,41 @@ fun FunkyBottomNavigation(navController: NavController) {
                 items.forEach { item ->
                     val isSelected = currentRoute == item.screen.route
                     val scale by animateFloatAsState(if (isSelected) 1.2f else 1f)
+                    val iconColor by animateColorAsState(if (isSelected) MangoYellow else Color.White.copy(alpha = 0.4f))
 
                     if (item == BottomNavItem.Discover) {
-                        // Highlighted center button with Mango Yellow
+                        // Highlighted center button
                         Box(
                             modifier = Modifier
-                                .size(56.dp)
+                                .size(64.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) MangoYellow else Color.Black)
+                                .background(MangoYellow)
                                 .clickable { navigateTo(navController, item.screen.route) },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.title,
-                                tint = if (isSelected) Color.Black else Color.White
+                                tint = Color.Black,
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                     } else {
-                        IconButton(
-                            onClick = { navigateTo(navController, item.screen.route) },
-                            modifier = Modifier.scale(scale)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .scale(scale)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = { navigateTo(navController, item.screen.route) }
+                                )
                         ) {
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.title,
-                                tint = if (isSelected) MangoYellow else Color.Black.copy(alpha = 0.6f)
+                                tint = iconColor,
+                                modifier = Modifier.size(26.dp)
                             )
                         }
                     }
