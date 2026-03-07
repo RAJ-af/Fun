@@ -71,28 +71,30 @@ class AuthViewModel(
     }
 
     fun continueWithEmail(email: String, pass: String) {
+        if (pass.length < 6) {
+            _authState.value = AuthState.Error("Password must be at least 6 characters")
+            return
+        }
+
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                // Try Login
-                val user = repository.login(email, pass)
-                if (user != null) {
-                    checkUserStatus()
-                }
-            } catch (loginError: Exception) {
-                try {
-                    val newUser = repository.signup(email, pass)
-                    if (newUser != null) {
-                        _authState.value = AuthState.Success("Account created successfully")
+                // Strategy: Signup first. If user exists, it throws.
+                repository.signup(email, pass)
+                _authState.value = AuthState.Success("Account created successfully")
+                checkUserStatus()
+            } catch (signUpError: Exception) {
+                val signUpMessage = signUpError.message ?: ""
+                if (signUpMessage.contains("User already registered", ignoreCase = true)) {
+                    // Try Login
+                    try {
+                        repository.login(email, pass)
                         checkUserStatus()
+                    } catch (loginError: Exception) {
+                        _authState.value = AuthState.Error(loginError.message ?: "Login failed")
                     }
-                } catch (signUpError: Exception) {
-                    val signUpMessage = signUpError.message ?: ""
-                    if (signUpMessage.contains("User already registered", ignoreCase = true)) {
-                        _authState.value = AuthState.Error("Incorrect password")
-                    } else {
-                        _authState.value = AuthState.Error("Could not create account. Use at least 6 characters for password.")
-                    }
+                } else {
+                    _authState.value = AuthState.Error(signUpError.message ?: "Signup failed")
                 }
             }
         }

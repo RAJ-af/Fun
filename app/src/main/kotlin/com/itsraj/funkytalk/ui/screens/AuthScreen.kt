@@ -158,10 +158,10 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 PremiumButton(
-                    text = "Continue",
+                    text = if (authState is AuthState.Loading) "Processing..." else "Continue",
                     onClick = { authViewModel.continueWithEmail(email, password) },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    enabled = authState !is AuthState.Loading && email.isNotBlank() && password.length >= 6
+                    enabled = authState !is AuthState.Loading && email.isNotBlank() && password.isNotBlank()
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
