@@ -17,6 +17,7 @@ sealed class Screen(val route: String) {
     object Discover : Screen("discover")
     object Chats : Screen("chats")
     object Profile : Screen("profile")
+    object VoiceRoom : Screen("voice_room")
 
     // Detailed
     object ChatDetail : Screen("chat_detail/{userName}/{photoUrl}") {

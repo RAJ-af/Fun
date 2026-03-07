@@ -10,6 +10,7 @@ supabase = "3.1.4"
 ktor = "3.0.0"
 coil = "2.7.0"
 playServicesAuth = "21.3.0"
+agora = "4.4.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -38,3 +39,4 @@ ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
+agora-voice = { group = "io.agora.rtc", name = "voice-sdk", version.ref = "agora" }
