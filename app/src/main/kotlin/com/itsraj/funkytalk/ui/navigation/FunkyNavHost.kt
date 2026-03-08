@@ -78,6 +78,12 @@ fun FunkyNavHost(
         composable(Screen.Auth.route) {
             AuthScreen(navController = navController, authViewModel = authViewModel)
         }
+        composable(Screen.EmailConfirmation.route) {
+            EmailConfirmationScreen(
+                navController = navController,
+                onResendEmail = { /* No implementation needed for this task */ }
+            )
+        }
         composable(Screen.Onboarding.route) {
             OnboardingScreen(navController = navController, authViewModel = authViewModel)
         }

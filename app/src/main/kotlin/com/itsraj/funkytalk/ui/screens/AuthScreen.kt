@@ -52,6 +52,8 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
             navController.navigate(Screen.Onboarding.route) {
                 popUpTo(Screen.Auth.route) { inclusive = true }
             }
+        } else if (authState is AuthState.Success && (authState as AuthState.Success).message == "Account created successfully") {
+            navController.navigate(Screen.EmailConfirmation.route)
         }
     }
 
