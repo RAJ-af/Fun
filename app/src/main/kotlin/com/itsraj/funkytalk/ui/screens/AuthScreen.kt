@@ -44,16 +44,28 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.Authenticated) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Auth.route) { inclusive = true }
+        when (val state = authState) {
+            is AuthState.Success -> {
+                if (state.message == "Account created successfully") {
+                    navController.navigate(Screen.EmailConfirmation.route)
+                }
             }
-        } else if (authState is AuthState.ProfileIncomplete) {
-            navController.navigate(Screen.Onboarding.route) {
-                popUpTo(Screen.Auth.route) { inclusive = true }
+            is AuthState.Authenticated -> {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Auth.route) { inclusive = true }
+                }
             }
-        } else if (authState is AuthState.Success && (authState as AuthState.Success).message == "Account created successfully") {
-            navController.navigate(Screen.EmailConfirmation.route)
+            is AuthState.ProfileIncomplete -> {
+                navController.navigate(Screen.Onboarding.route) {
+                    popUpTo(Screen.Auth.route) { inclusive = true }
+                }
+            }
+            is AuthState.Error -> {
+                if (state.message.contains("Please confirm your email", ignoreCase = true)) {
+                    navController.navigate(Screen.EmailConfirmation.route)
+                }
+            }
+            else -> {}
         }
     }
 

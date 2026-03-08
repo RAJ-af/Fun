@@ -83,7 +83,11 @@ class AuthViewModel(
                         checkUserStatus()
                     }
                     is SessionStatus.NotAuthenticated -> {
-                        _authState.value = AuthState.Unauthenticated
+                        // Only set Unauthenticated if we're not currently in a Success/Error state
+                        val current = _authState.value
+                        if (current !is AuthState.Success && current !is AuthState.Error) {
+                            _authState.value = AuthState.Unauthenticated
+                        }
                     }
                     else -> {}
                 }
@@ -136,7 +140,6 @@ class AuthViewModel(
                 // Strategy: Signup first. If user exists, it throws.
                 repository.signup(email, pass)
                 _authState.value = AuthState.Success("Account created successfully")
-                checkUserStatus()
             } catch (signUpError: Exception) {
                 val signUpMessage = signUpError.message ?: ""
                 if (signUpMessage.contains("User already registered", ignoreCase = true)) {
