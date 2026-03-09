@@ -96,12 +96,14 @@ fun FunkyNavHost(
         composable(Screen.Permissions.route) { PlaceholderScreen("Permissions") }
 
         // Main Tabs
-        composable(Screen.Home.route) { HomeScreen(navController, voiceRoomViewModel) }
+        composable(Screen.Home.route) { HomeScreen(navController, voiceRoomViewModel, authViewModel) }
         composable(Screen.Moments.route) { MomentsScreen() }
         composable(Screen.Discover.route) { DiscoverScreen() }
         composable(Screen.Chats.route) { ChatsScreen(navController) }
         composable(Screen.Profile.route) { ProfileScreen() }
         composable(Screen.VoiceRoom.route) { VoiceRoomScreen(navController, voiceRoomViewModel) }
+        composable(Screen.CreateRoom.route) { PlaceholderScreen("Create Room") }
+        composable(Screen.Announcements.route) { PlaceholderScreen("Announcements") }
 
         // Details
         composable(Screen.ChatDetail.route) { backStackEntry ->

@@ -40,6 +40,8 @@ class AuthViewModel(
 
     private val _usernameQuery = MutableStateFlow("")
 
+    val currentUser get() = repository.currentUser
+
     init {
         observeSession()
         observeUsernameQuery()

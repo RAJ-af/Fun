@@ -37,22 +37,17 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.itsraj.funkytalk.ui.components.FunkyRoomCard
 import com.itsraj.funkytalk.ui.components.RoomCardLayout
+import com.itsraj.funkytalk.ui.navigation.Screen
 import com.itsraj.funkytalk.ui.theme.MangoYellow
 import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewModel) {
+fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewModel, authViewModel: com.itsraj.funkytalk.viewmodel.AuthViewModel) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tags = listOf("Recommend", "Language", "CN", "EN", "B.Indo", "Music", "Make Friends", "Game")
 
-    val dummyRooms = listOf(
-        YeetalkRoom("English Practice Room", "English", "us", 15, listOf("https://i.pravatar.cc/150?u=en1", "https://i.pravatar.cc/150?u=en2", "https://i.pravatar.cc/150?u=en3", "https://i.pravatar.cc/150?u=en4", "https://i.pravatar.cc/150?u=en5", "https://i.pravatar.cc/150?u=en6", "https://i.pravatar.cc/150?u=en7")),
-        YeetalkRoom("Japanese Beginner Room", "Japanese", "jp", 8, listOf("https://i.pravatar.cc/150?u=jp1", "https://i.pravatar.cc/150?u=jp2", "https://i.pravatar.cc/150?u=jp3")),
-        YeetalkRoom("Spanish Chat Room", "Spanish", "es", 6, listOf("https://i.pravatar.cc/150?u=es1", "https://i.pravatar.cc/150?u=es2")),
-        YeetalkRoom("German Conversation", "German", "de", 4, listOf("https://i.pravatar.cc/150?u=de1", "https://i.pravatar.cc/150?u=de2", "https://i.pravatar.cc/150?u=de3")),
-        YeetalkRoom("French Learning", "French", "fr", 12, listOf("https://i.pravatar.cc/150?u=fr1", "https://i.pravatar.cc/150?u=fr2", "https://i.pravatar.cc/150?u=fr3", "https://i.pravatar.cc/150?u=fr4")),
-        YeetalkRoom("Korean Talk Room", "Korean", "kr", 9, listOf("https://i.pravatar.cc/150?u=kr1", "https://i.pravatar.cc/150?u=kr2", "https://i.pravatar.cc/150?u=kr3"))
-    )
+    val rooms by voiceRoomViewModel.rooms.collectAsState()
+    val userId = authViewModel.currentUser?.id ?: ""
 
     Box(
         modifier = Modifier
@@ -149,7 +144,7 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                 // Right: Action Icons
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
-                        onClick = { /* Create Room */ },
+                        onClick = { navController.navigate(Screen.CreateRoom.route) },
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
@@ -161,7 +156,7 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
-                        onClick = { /* Announcements */ },
+                        onClick = { navController.navigate(Screen.Announcements.route) },
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
@@ -180,16 +175,19 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                itemsIndexed(dummyRooms) { index, room ->
+                itemsIndexed(rooms) { index, room ->
                     // Alternate layout types: Layout A (Large) and Layout B (Grid/Small)
                     val layoutType = if (index % 3 == 0) RoomCardLayout.LARGE else RoomCardLayout.GRID
                     FunkyRoomCard(
                         hashtag = room.title.replace(" ", ""),
-                        language = room.languageName,
-                        languageCode = room.flag,
-                        participantCount = room.participantCount,
-                        avatars = room.avatars,
-                        onJoin = { navController.navigate("voice_room") },
+                        language = room.language,
+                        languageCode = room.country_code,
+                        participantCount = room.participants_count,
+                        avatars = room.participant_avatars,
+                        onJoin = {
+                            voiceRoomViewModel.joinRoom(room.id, userId)
+                            navController.navigate("voice_room")
+                        },
                         layoutType = layoutType
                     )
                 }
