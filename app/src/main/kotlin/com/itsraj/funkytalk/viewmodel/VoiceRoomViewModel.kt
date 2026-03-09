@@ -18,6 +18,9 @@ class VoiceRoomViewModel(
     private val _rooms = MutableStateFlow<List<VoiceRoom>>(emptyList())
     val rooms: StateFlow<List<VoiceRoom>> = _rooms
 
+    private val _currentRoomId = MutableStateFlow<String?>(null)
+    val currentRoomId: StateFlow<String?> = _currentRoomId
+
     private val _isMuted = MutableStateFlow(false)
     val isMuted: StateFlow<Boolean> = _isMuted
 
@@ -30,11 +33,21 @@ class VoiceRoomViewModel(
     init {
         fetchRooms()
         setupAgora()
+        observeRealtimeChanges()
     }
 
     fun fetchRooms() {
         viewModelScope.launch {
             _rooms.value = repository.getActiveVoiceRooms()
+        }
+    }
+
+    private fun observeRealtimeChanges() {
+        viewModelScope.launch {
+            repository.observeParticipantChanges().collect {
+                // For MVP, just re-fetch all rooms when any join/leave occurs
+                fetchRooms()
+            }
         }
     }
 
@@ -60,15 +73,32 @@ class VoiceRoomViewModel(
         }
     }
 
+    fun createRoom(title: String, language: String, hostId: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            val room = repository.createRoom(title, language, hostId)
+            if (room != null) {
+                _currentRoomId.value = room.id
+                rtcEngine?.joinChannel(null, room.id, null, 0)
+                onSuccess()
+            }
+        }
+    }
+
     fun joinRoom(roomId: String, userId: String) {
         viewModelScope.launch {
+            _currentRoomId.value = roomId
             repository.joinRoom(roomId, userId)
             rtcEngine?.joinChannel(null, roomId, null, 0)
         }
     }
 
-    fun leaveRoom() {
-        rtcEngine?.leaveChannel()
+    fun leaveRoom(userId: String) {
+        val roomId = _currentRoomId.value ?: return
+        viewModelScope.launch {
+            repository.leaveRoom(roomId, userId)
+            rtcEngine?.leaveChannel()
+            _currentRoomId.value = null
+        }
     }
 
     fun toggleMute() {
