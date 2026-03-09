@@ -47,7 +47,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
         when (val state = authState) {
             is AuthState.Success -> {
                 if (state.message == "Account created successfully") {
-                    navController.navigate(Screen.EmailConfirmation.route)
+                    navController.navigate(Screen.EmailConfirmation.createRoute(email))
                 }
             }
             is AuthState.EmailVerificationPending -> {
@@ -65,7 +65,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
             }
             is AuthState.Error -> {
                 if (state.message.contains("Please confirm your email", ignoreCase = true)) {
-                    navController.navigate(Screen.EmailConfirmation.route)
+                    navController.navigate(Screen.EmailConfirmation.createRoute(email))
                 }
             }
             else -> {}
