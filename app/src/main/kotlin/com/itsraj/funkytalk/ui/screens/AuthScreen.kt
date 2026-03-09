@@ -50,6 +50,9 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel) {
                     navController.navigate(Screen.EmailConfirmation.route)
                 }
             }
+            is AuthState.EmailVerificationPending -> {
+                navController.navigate("email_confirmation/${state.email}")
+            }
             is AuthState.Authenticated -> {
                 navController.navigate(Screen.Home.route) {
                     popUpTo(Screen.Auth.route) { inclusive = true }

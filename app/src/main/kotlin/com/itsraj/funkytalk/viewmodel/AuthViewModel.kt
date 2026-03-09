@@ -20,6 +20,7 @@ sealed class AuthState {
     object Authenticated : AuthState()
     object ProfileIncomplete : AuthState()
     object Unauthenticated : AuthState()
+    data class EmailVerificationPending(val email: String) : AuthState()
     data class Success(val message: String) : AuthState()
     data class Error(val message: String) : AuthState()
 }
@@ -101,6 +102,12 @@ class AuthViewModel(
             if (user == null) {
                 _authState.value = AuthState.Unauthenticated
             } else {
+                // Fix verification flow: check if email is verified
+                if (user.emailConfirmedAt == null) {
+                    _authState.value = AuthState.EmailVerificationPending(user.email ?: "")
+                    return@launch
+                }
+
                 val profile = repository.getProfile(user.id)
                 // Use presence of hobbies (last onboarding step) to determine completion
                 val isCompleted = profile != null && !profile.hobbies.isNullOrEmpty()
@@ -139,7 +146,7 @@ class AuthViewModel(
             try {
                 // Strategy: Signup first. If user exists, it throws.
                 repository.signup(email, pass)
-                _authState.value = AuthState.Success("Account created successfully")
+                _authState.value = AuthState.EmailVerificationPending(email)
             } catch (signUpError: Exception) {
                 val signUpMessage = signUpError.message ?: ""
                 if (signUpMessage.contains("User already registered", ignoreCase = true)) {
@@ -281,6 +288,17 @@ class AuthViewModel(
                 _authState.value = AuthState.Authenticated
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(mapError(e, "Failed to complete onboarding"))
+            }
+        }
+    }
+
+    fun resendConfirmationEmail(email: String) {
+        viewModelScope.launch {
+            try {
+                repository.resendConfirmationEmail(email)
+                _authState.value = AuthState.Success("Confirmation email sent again")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(mapError(e, "Failed to resend email"))
             }
         }
     }

@@ -112,6 +112,10 @@ class AuthRepository {
         return user
     }
 
+    suspend fun resendConfirmationEmail(email: String) {
+        auth.resendEmail(io.github.jan.supabase.auth.OtpType.Email.SIGNUP, email)
+    }
+
     private suspend fun createInitialProfileRow(user: UserInfo) {
         try {
             val existing = getProfile(user.id)
