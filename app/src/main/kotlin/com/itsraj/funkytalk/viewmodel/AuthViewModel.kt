@@ -96,9 +96,9 @@ class AuthViewModel(
         }
     }
 
-    fun checkUserStatus() {
+    fun checkUserStatus(refresh: Boolean = false) {
         viewModelScope.launch {
-            val user = repository.currentUser
+            val user = if (refresh) repository.refreshUser() else repository.currentUser
             if (user == null) {
                 _authState.value = AuthState.Unauthenticated
             } else {

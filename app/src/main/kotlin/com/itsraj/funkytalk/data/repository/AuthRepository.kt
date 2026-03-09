@@ -21,6 +21,14 @@ class AuthRepository {
     val currentUser: UserInfo? get() = auth.currentUserOrNull()
     val sessionStatus: Flow<SessionStatus> = auth.sessionStatus
 
+    suspend fun refreshUser(): UserInfo? {
+        return try {
+            auth.retrieveUserForCurrentSession(true)
+        } catch (e: Exception) {
+            auth.currentUserOrNull()
+        }
+    }
+
     suspend fun getProfile(userId: String): UserProfile? {
         return try {
             supabase.postgrest["profiles"].select {
