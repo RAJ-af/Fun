@@ -1,6 +1,9 @@
 package com.itsraj.funkytalk
 
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.SvgDecoder
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.FlowType
@@ -8,10 +11,18 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.storage.Storage
 
-class FunkyTalkApp : Application() {
+class FunkyTalkApp : Application(), ImageLoaderFactory {
 
     companion object {
         lateinit var supabase: SupabaseClient
+    }
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .components {
+                add(SvgDecoder.Factory())
+            }
+            .build()
     }
 
     override fun onCreate() {

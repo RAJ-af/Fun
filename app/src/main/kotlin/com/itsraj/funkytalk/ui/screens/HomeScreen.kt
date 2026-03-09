@@ -74,10 +74,22 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(top = 24.dp, bottom = 12.dp)
+                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // TAG System
+                // Left: Avatar Stack
+                UserAvatarStack(
+                    avatars = listOf(
+                        "https://i.pravatar.cc/150?u=1",
+                        "https://i.pravatar.cc/150?u=2",
+                        "https://i.pravatar.cc/150?u=3"
+                    )
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Center: TAG System
                 ScrollableTabRow(
                     selectedTabIndex = selectedTabIndex,
                     modifier = Modifier.weight(1f),
@@ -132,31 +144,31 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                     }
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(24.dp))
 
                 // Right: Action Icons
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = { /* Create Room */ },
-                        modifier = Modifier.size(40.dp).offset(y = (-4).dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.AddBox,
                             contentDescription = "Create Room",
-                            tint = Color.Black.copy(alpha = 0.7f),
-                            modifier = Modifier.size(26.dp)
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(2.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
                         onClick = { /* Announcements */ },
-                        modifier = Modifier.size(40.dp).offset(y = (-4).dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Campaign,
                             contentDescription = "Announcements",
-                            tint = Color.Black.copy(alpha = 0.7f),
-                            modifier = Modifier.size(26.dp)
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -193,17 +205,17 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
 fun UserAvatarStack(avatars: List<String>) {
     Row(
         modifier = Modifier.wrapContentSize(),
-        horizontalArrangement = Arrangement.spacedBy((-12).dp)
+        horizontalArrangement = Arrangement.spacedBy((-14).dp)
     ) {
         avatars.forEach { avatarUrl ->
             AsyncImage(
                 model = avatarUrl,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(30.dp)
                     .clip(CircleShape)
                     .background(Color.White)
-                    .border(1.5.dp, Color.White, CircleShape),
+                    .border(2.dp, Color.White, CircleShape),
                 contentScale = ContentScale.Crop
             )
         }
