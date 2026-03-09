@@ -91,7 +91,9 @@ fun FunkyRoomCard(
                         AsyncImage(
                             model = "https://hatscripts.github.io/circle-flags/flags/${languageCode.lowercase()}.svg",
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp).clip(CircleShape)
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
