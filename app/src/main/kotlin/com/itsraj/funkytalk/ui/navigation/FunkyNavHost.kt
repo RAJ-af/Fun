@@ -1,6 +1,7 @@
 package com.itsraj.funkytalk.ui.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
@@ -45,13 +46,14 @@ fun MainAppScreen() {
             if (currentRoute in bottomBarScreens) {
                 FunkyBottomNavigation(navController = navController)
             }
-        }
+        },
+        containerColor = Color.Transparent
     ) { innerPadding ->
         FunkyNavHost(
             navController = navController,
             authViewModel = authViewModel,
             voiceRoomViewModel = voiceRoomViewModel,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         )
     }
 }
