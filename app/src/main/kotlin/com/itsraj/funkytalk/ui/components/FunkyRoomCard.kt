@@ -30,9 +30,10 @@ enum class RoomCardLayout {
 fun FunkyRoomCard(
     hashtag: String,
     language: String,
-    flag: String,
+    languageCode: String,
     participantCount: Int,
     avatars: List<String>,
+    onJoin: () -> Unit,
     layoutType: RoomCardLayout = RoomCardLayout.LARGE,
     modifier: Modifier = Modifier
 ) {
@@ -83,16 +84,20 @@ fun FunkyRoomCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(Color(0xFFF5F5F5))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        Text(text = flag, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
+                        AsyncImage(
+                            model = "https://hatscripts.github.io/circle-flags/flags/${languageCode.lowercase()}.svg",
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp).clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = language,
                             color = Color.Black.copy(alpha = 0.6f),
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -104,13 +109,13 @@ fun FunkyRoomCard(
                             imageVector = Icons.Default.People,
                             contentDescription = null,
                             tint = Color.Black.copy(alpha = 0.3f),
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = participantCount.toString(),
                             color = Color.Black.copy(alpha = 0.3f),
-                            fontSize = 12.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -126,44 +131,64 @@ fun FunkyRoomCard(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
-                // Bottom section: Avatar Collage
+                // Bottom section: Avatar Collage & Join Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy((-10).dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
                 ) {
-                    avatars.take(avatarCount).forEach { avatarUrl ->
-                        Surface(
-                            modifier = Modifier
-                                .size(avatarSize)
-                                .border(2.dp, Color.White, CircleShape),
-                            shape = CircleShape,
-                            color = Color(0xFFEEEEEE)
-                        ) {
-                            AsyncImage(
-                                model = avatarUrl,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy((-10).dp)
+                    ) {
+                        avatars.take(avatarCount).forEach { avatarUrl ->
+                            Surface(
+                                modifier = Modifier
+                                    .size(avatarSize)
+                                    .border(2.dp, Color.White, CircleShape),
+                                shape = CircleShape,
+                                color = Color(0xFFEEEEEE)
+                            ) {
+                                AsyncImage(
+                                    model = avatarUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+
+                        if (avatars.size > avatarCount) {
+                            Box(
+                                modifier = Modifier
+                                    .size(avatarSize)
+                                    .clip(CircleShape)
+                                    .background(MangoYellow)
+                                    .border(2.dp, Color.White, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "+${avatars.size - avatarCount}",
+                                    color = Color.Black,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
 
-                    if (avatars.size > avatarCount) {
-                        Box(
-                            modifier = Modifier
-                                .size(avatarSize)
-                                .clip(CircleShape)
-                                .background(MangoYellow)
-                                .border(2.dp, Color.White, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "+${avatars.size - avatarCount}",
-                                color = Color.Black,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    Button(
+                        onClick = onJoin,
+                        colors = ButtonDefaults.buttonColors(containerColor = MangoYellow),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text(
+                            text = "Join",
+                            color = Color.Black,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }

@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Campaign
-import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -43,15 +43,15 @@ import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 @Composable
 fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewModel) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tags = listOf("Recommend", "Language", "CN", "EN", "B.Indo", "Game", "Make Friends", "Music")
+    val tags = listOf("Recommend", "Language", "CN", "EN", "B.Indo", "Music", "Make Friends", "Game")
 
     val dummyRooms = listOf(
-        YeetalkRoom("English Practice Room", "English", "🇺🇸", 15, listOf("https://i.pravatar.cc/150?u=en1", "https://i.pravatar.cc/150?u=en2", "https://i.pravatar.cc/150?u=en3", "https://i.pravatar.cc/150?u=en4", "https://i.pravatar.cc/150?u=en5", "https://i.pravatar.cc/150?u=en6", "https://i.pravatar.cc/150?u=en7")),
-        YeetalkRoom("Japanese Beginner Room", "Japanese", "🇯🇵", 8, listOf("https://i.pravatar.cc/150?u=jp1", "https://i.pravatar.cc/150?u=jp2", "https://i.pravatar.cc/150?u=jp3")),
-        YeetalkRoom("Spanish Chat Room", "Spanish", "🇪🇸", 6, listOf("https://i.pravatar.cc/150?u=es1", "https://i.pravatar.cc/150?u=es2")),
-        YeetalkRoom("German Conversation", "German", "🇩🇪", 4, listOf("https://i.pravatar.cc/150?u=de1", "https://i.pravatar.cc/150?u=de2", "https://i.pravatar.cc/150?u=de3")),
-        YeetalkRoom("French Learning", "French", "🇫🇷", 12, listOf("https://i.pravatar.cc/150?u=fr1", "https://i.pravatar.cc/150?u=fr2", "https://i.pravatar.cc/150?u=fr3", "https://i.pravatar.cc/150?u=fr4")),
-        YeetalkRoom("Korean Talk Room", "Korean", "🇰🇷", 9, listOf("https://i.pravatar.cc/150?u=kr1", "https://i.pravatar.cc/150?u=kr2", "https://i.pravatar.cc/150?u=kr3"))
+        YeetalkRoom("English Practice Room", "English", "us", 15, listOf("https://i.pravatar.cc/150?u=en1", "https://i.pravatar.cc/150?u=en2", "https://i.pravatar.cc/150?u=en3", "https://i.pravatar.cc/150?u=en4", "https://i.pravatar.cc/150?u=en5", "https://i.pravatar.cc/150?u=en6", "https://i.pravatar.cc/150?u=en7")),
+        YeetalkRoom("Japanese Beginner Room", "Japanese", "jp", 8, listOf("https://i.pravatar.cc/150?u=jp1", "https://i.pravatar.cc/150?u=jp2", "https://i.pravatar.cc/150?u=jp3")),
+        YeetalkRoom("Spanish Chat Room", "Spanish", "es", 6, listOf("https://i.pravatar.cc/150?u=es1", "https://i.pravatar.cc/150?u=es2")),
+        YeetalkRoom("German Conversation", "German", "de", 4, listOf("https://i.pravatar.cc/150?u=de1", "https://i.pravatar.cc/150?u=de2", "https://i.pravatar.cc/150?u=de3")),
+        YeetalkRoom("French Learning", "French", "fr", 12, listOf("https://i.pravatar.cc/150?u=fr1", "https://i.pravatar.cc/150?u=fr2", "https://i.pravatar.cc/150?u=fr3", "https://i.pravatar.cc/150?u=fr4")),
+        YeetalkRoom("Korean Talk Room", "Korean", "kr", 9, listOf("https://i.pravatar.cc/150?u=kr1", "https://i.pravatar.cc/150?u=kr2", "https://i.pravatar.cc/150?u=kr3"))
     )
 
     Box(
@@ -74,21 +74,10 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left: Avatar Stack
-                UserAvatarStack(
-                    avatars = listOf(
-                        "https://i.pravatar.cc/150?u=1",
-                        "https://i.pravatar.cc/150?u=2",
-                        "https://i.pravatar.cc/150?u=3"
-                    )
-                )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // Center: TAG System
+                // TAG System
                 ScrollableTabRow(
                     selectedTabIndex = selectedTabIndex,
                     modifier = Modifier.weight(1f),
@@ -149,25 +138,25 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = { /* Create Room */ },
-                        modifier = Modifier.size(32.dp).padding(4.dp)
+                        modifier = Modifier.size(40.dp).offset(y = (-4).dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.AddCircleOutline,
+                            imageVector = Icons.Outlined.AddBox,
                             contentDescription = "Create Room",
                             tint = Color.Black.copy(alpha = 0.7f),
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(2.dp))
                     IconButton(
                         onClick = { /* Announcements */ },
-                        modifier = Modifier.size(32.dp).padding(4.dp)
+                        modifier = Modifier.size(40.dp).offset(y = (-4).dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Campaign,
                             contentDescription = "Announcements",
                             tint = Color.Black.copy(alpha = 0.7f),
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
@@ -185,9 +174,10 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                     FunkyRoomCard(
                         hashtag = room.title.replace(" ", ""),
                         language = room.languageName,
-                        flag = room.flag,
+                        languageCode = room.flag,
                         participantCount = room.participantCount,
                         avatars = room.avatars,
+                        onJoin = { navController.navigate("voice_room") },
                         layoutType = layoutType
                     )
                 }
