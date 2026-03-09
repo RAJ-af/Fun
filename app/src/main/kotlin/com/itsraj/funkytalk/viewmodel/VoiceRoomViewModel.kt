@@ -60,8 +60,11 @@ class VoiceRoomViewModel(
         }
     }
 
-    fun joinRoom(roomId: String) {
-        rtcEngine?.joinChannel(null, roomId, null, 0)
+    fun joinRoom(roomId: String, userId: String) {
+        viewModelScope.launch {
+            repository.joinRoom(roomId, userId)
+            rtcEngine?.joinChannel(null, roomId, null, 0)
+        }
     }
 
     fun leaveRoom() {
