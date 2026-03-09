@@ -24,17 +24,47 @@ import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
+import com.itsraj.funkytalk.ui.navigation.Screen
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.theme.MangoYellow
 import com.itsraj.funkytalk.viewmodel.AuthState
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun EmailConfirmationScreen(navController: NavController, authViewModel: AuthViewModel, email: String) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val authState by authViewModel.authState.collectAsState()
     var animationPlayed by remember { mutableStateOf(false) }
+
+    var resendCooldown by remember { mutableIntStateOf(0) }
+    val isResendEnabled = resendCooldown == 0
+
+    // Lifecycle observer to check verification when app resumes
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                authViewModel.checkUserStatus(refresh = true)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Timer for resend cooldown
+    LaunchedEffect(resendCooldown) {
+        if (resendCooldown > 0) {
+            delay(1000L)
+            resendCooldown -= 1
+        }
+    }
 
     val circleProgress = animateFloatAsState(
         targetValue = if (animationPlayed) 1f else 0f,
@@ -50,11 +80,27 @@ fun EmailConfirmationScreen(navController: NavController, authViewModel: AuthVie
 
     LaunchedEffect(Unit) {
         animationPlayed = true
+        authViewModel.checkUserStatus(refresh = true)
     }
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.Success && (authState as AuthState.Success).message == "Confirmation email sent again") {
-            Toast.makeText(context, "Confirmation email sent again", Toast.LENGTH_SHORT).show()
+        when (val state = authState) {
+            is AuthState.Success -> {
+                if (state.message == "Confirmation email sent again") {
+                    Toast.makeText(context, "Confirmation email sent again", Toast.LENGTH_SHORT).show()
+                }
+            }
+            is AuthState.Authenticated -> {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Auth.route) { this.inclusive = true }
+                }
+            }
+            is AuthState.ProfileIncomplete -> {
+                navController.navigate(Screen.Onboarding.route) {
+                    popUpTo(Screen.Auth.route) { this.inclusive = true }
+                }
+            }
+            else -> {}
         }
     }
 
@@ -128,7 +174,7 @@ fun EmailConfirmationScreen(navController: NavController, authViewModel: AuthVie
                     }
                     context.startActivity(intent)
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Could not open email app", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier
@@ -139,16 +185,22 @@ fun EmailConfirmationScreen(navController: NavController, authViewModel: AuthVie
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(
-            onClick = { authViewModel.resendConfirmationEmail(email) },
+            onClick = {
+                if (isResendEnabled) {
+                    authViewModel.resendConfirmationEmail(email)
+                    resendCooldown = 30
+                }
+            },
+            enabled = isResendEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
         ) {
             Text(
-                text = "Resend Email",
+                text = if (isResendEnabled) "Resend Email" else "Resend Email (${resendCooldown}s)",
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black.copy(alpha = 0.6f)
+                    color = if (isResendEnabled) Color.Black.copy(alpha = 0.6f) else Color.Gray
                 )
             )
         }
