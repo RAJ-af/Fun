@@ -1,5 +1,6 @@
 package com.itsraj.funkytalk.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,7 +18,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,7 +49,13 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFAFAFA))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFFFFF9E6), Color(0xFFFFFFFF)),
+                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                    end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                )
+            )
             .statusBarsPadding()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -59,29 +70,51 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                 // TAG System (Scrollable Row)
                 LazyRow(
                     modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(end = 16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    contentPadding = PaddingValues(end = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     items(tags) { tag ->
                         val isSelected = tag == selectedTag
-                        Surface(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .clickable { selectedTag = tag },
-                            color = if (isSelected) MangoYellow else Color.White,
-                            shape = RoundedCornerShape(20.dp),
-                            tonalElevation = if (isSelected) 0.dp else 2.dp,
-                            shadowElevation = if (isSelected) 4.dp else 1.dp
+                        Column(
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                indication = null
+                            ) { selectedTag = tag },
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = tag,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) Color.Black else Color.Black.copy(alpha = 0.5f),
-                                    fontSize = 13.sp
+                                    fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
+                                    color = if (isSelected) Color.Black else Color.Gray,
+                                    fontSize = 15.sp
                                 )
                             )
+
+                            if (isSelected) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Canvas(modifier = Modifier.width(24.dp).height(4.dp)) {
+                                    val path = Path().apply {
+                                        moveTo(0f, size.height / 2)
+                                        quadraticTo(
+                                            size.width / 4, 0f,
+                                            size.width / 2, size.height / 2
+                                        )
+                                        quadraticTo(
+                                            size.width * 3 / 4, size.height,
+                                            size.width, size.height / 2
+                                        )
+                                    }
+                                    drawPath(
+                                        path = path,
+                                        color = MangoYellow,
+                                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                                    )
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
