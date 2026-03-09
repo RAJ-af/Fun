@@ -101,8 +101,8 @@ fun FunkyNavHost(
         composable(Screen.Discover.route) { DiscoverScreen() }
         composable(Screen.Chats.route) { ChatsScreen(navController) }
         composable(Screen.Profile.route) { ProfileScreen() }
-        composable(Screen.VoiceRoom.route) { VoiceRoomScreen(navController, voiceRoomViewModel) }
-        composable(Screen.CreateRoom.route) { PlaceholderScreen("Create Room") }
+        composable(Screen.VoiceRoom.route) { VoiceRoomScreen(navController, voiceRoomViewModel, authViewModel) }
+        composable(Screen.CreateRoom.route) { CreateRoomScreen(navController, voiceRoomViewModel, authViewModel) }
         composable(Screen.Announcements.route) { PlaceholderScreen("Announcements") }
 
         // Details

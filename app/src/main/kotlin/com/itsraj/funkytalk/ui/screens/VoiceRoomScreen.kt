@@ -31,9 +31,14 @@ import com.itsraj.funkytalk.ui.theme.MangoYellow
 import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 
 @Composable
-fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel) {
+fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel, authViewModel: com.itsraj.funkytalk.viewmodel.AuthViewModel) {
     val isMuted by viewModel.isMuted.collectAsState()
     val isJoined by viewModel.isJoined.collectAsState()
+    val currentRoomId by viewModel.currentRoomId.collectAsState()
+    val rooms by viewModel.rooms.collectAsState()
+
+    val room = rooms.find { it.id == currentRoomId }
+    val userId = authViewModel.currentUser?.id ?: ""
 
     Column(
         modifier = Modifier
@@ -55,7 +60,7 @@ fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "English Practice Room",
+                    text = room?.title ?: "Voice Room",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
                     color = Color.Black
                 )
@@ -143,7 +148,7 @@ fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel)
                 // Leave Room Button
                 Button(
                     onClick = {
-                        viewModel.leaveRoom()
+                        viewModel.leaveRoom(userId)
                         navController.popBackStack()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
