@@ -78,10 +78,12 @@ fun FunkyNavHost(
         composable(Screen.Auth.route) {
             AuthScreen(navController = navController, authViewModel = authViewModel)
         }
-        composable(Screen.EmailConfirmation.route) {
+        composable(Screen.EmailConfirmation.route) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
             EmailConfirmationScreen(
                 navController = navController,
-                onResendEmail = { /* No implementation needed for this task */ }
+                authViewModel = authViewModel,
+                email = email
             )
         }
         composable(Screen.Onboarding.route) {

@@ -8,7 +8,9 @@ sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object Welcome : Screen("welcome")
     object Auth : Screen("auth")
-    object EmailConfirmation : Screen("email_confirmation")
+    object EmailConfirmation : Screen("email_confirmation/{email}") {
+        fun createRoute(email: String) = "email_confirmation/$email"
+    }
     object Onboarding : Screen("onboarding")
     object Permissions : Screen("permissions")
 

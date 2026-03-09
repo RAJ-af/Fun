@@ -19,14 +19,21 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.theme.MangoYellow
+import com.itsraj.funkytalk.viewmodel.AuthState
+import com.itsraj.funkytalk.viewmodel.AuthViewModel
 
 @Composable
-fun EmailConfirmationScreen(navController: NavController, onResendEmail: () -> Unit) {
+fun EmailConfirmationScreen(navController: NavController, authViewModel: AuthViewModel, email: String) {
+    val context = LocalContext.current
+    val authState by authViewModel.authState.collectAsState()
     var animationPlayed by remember { mutableStateOf(false) }
 
     val circleProgress = animateFloatAsState(
@@ -43,6 +50,12 @@ fun EmailConfirmationScreen(navController: NavController, onResendEmail: () -> U
 
     LaunchedEffect(Unit) {
         animationPlayed = true
+    }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success && (authState as AuthState.Success).message == "Confirmation email sent again") {
+            Toast.makeText(context, "Confirmation email sent again", Toast.LENGTH_SHORT).show()
+        }
     }
 
     Column(
@@ -94,7 +107,7 @@ fun EmailConfirmationScreen(navController: NavController, onResendEmail: () -> U
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "We sent a confirmation link to your email address.\nPlease check your inbox and click the link to activate your account.",
+            text = "We sent a confirmation link to your email:\n$email",
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = Color.Black.copy(alpha = 0.5f),
                 lineHeight = 24.sp
@@ -107,7 +120,17 @@ fun EmailConfirmationScreen(navController: NavController, onResendEmail: () -> U
 
         PremiumButton(
             text = "Open Email",
-            onClick = { /* In a real app, this would open the email client */ },
+            onClick = {
+                try {
+                    val intent = Intent(Intent.ACTION_MAIN).apply {
+                        addCategory(Intent.CATEGORY_APP_EMAIL)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Could not open email app", Toast.LENGTH_SHORT).show()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
@@ -116,7 +139,7 @@ fun EmailConfirmationScreen(navController: NavController, onResendEmail: () -> U
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(
-            onClick = onResendEmail,
+            onClick = { authViewModel.resendConfirmationEmail(email) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
