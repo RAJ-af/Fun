@@ -1,5 +1,8 @@
 package com.itsraj.funkytalk.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,10 +17,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -34,8 +39,8 @@ import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 
 @Composable
 fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewModel) {
-    var selectedTag by remember { mutableStateOf("Recommended") }
-    val tags = listOf("Recommended", "Language", "CN", "EN", "B.Indo", "Music", "Make friends")
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val tags = listOf("Discover", "Language", "CN", "EN", "Music")
 
     val dummyRooms = listOf(
         YeetalkRoom("English Practice Room", "English", "🇺🇸", 15, listOf("https://i.pravatar.cc/150?u=en1", "https://i.pravatar.cc/150?u=en2", "https://i.pravatar.cc/150?u=en3", "https://i.pravatar.cc/150?u=en4", "https://i.pravatar.cc/150?u=en5", "https://i.pravatar.cc/150?u=en6", "https://i.pravatar.cc/150?u=en7")),
@@ -66,58 +71,55 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // TAG System (Scrollable Row)
-                LazyRow(
+                ScrollableTabRow(
+                    selectedTabIndex = selectedTabIndex,
                     modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(end = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    containerColor = Color.Transparent,
+                    divider = {},
+                    edgePadding = 0.dp,
+                    indicator = { tabPositions ->
+                        val currentTab = tabPositions[selectedTabIndex]
+                        WavyIndicator(
+                            modifier = Modifier.tabIndicatorOffset(currentTab),
+                            color = MangoYellow
+                        )
+                    }
                 ) {
-                    items(tags) { tag ->
-                        val isSelected = tag == selectedTag
-                        Column(
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                indication = null
-                            ) { selectedTag = tag },
-                            horizontalAlignment = Alignment.CenterHorizontally
+                    tags.forEachIndexed { index, tag ->
+                        val isSelected = selectedTabIndex == index
+                        val scale by animateFloatAsState(
+                            targetValue = if (isSelected) 1.15f else 1f,
+                            animationSpec = tween(durationMillis = 300)
+                        )
+                        val color by animateColorAsState(
+                            targetValue = if (isSelected) MangoYellow else Color.Gray,
+                            animationSpec = tween(durationMillis = 300)
+                        )
+
+                        Tab(
+                            selected = isSelected,
+                            onClick = { selectedTabIndex = index },
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .height(48.dp),
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            selectedContentColor = MangoYellow,
+                            unselectedContentColor = Color.Gray
                         ) {
                             Text(
                                 text = tag,
+                                modifier = Modifier.scale(scale),
                                 style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
-                                    color = if (isSelected) Color.Black else Color.Gray,
-                                    fontSize = 15.sp
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                    fontSize = 15.sp,
+                                    color = color
                                 )
                             )
-
-                            if (isSelected) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Canvas(modifier = Modifier.width(24.dp).height(4.dp)) {
-                                    val path = Path().apply {
-                                        moveTo(0f, size.height / 2)
-                                        quadraticTo(
-                                            size.width / 4, 0f,
-                                            size.width / 2, size.height / 2
-                                        )
-                                        quadraticTo(
-                                            size.width * 3 / 4, size.height,
-                                            size.width, size.height / 2
-                                        )
-                                    }
-                                    drawPath(
-                                        path = path,
-                                        color = MangoYellow,
-                                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                                    )
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
                         }
                     }
                 }
@@ -166,6 +168,33 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                 item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
+    }
+}
+
+@Composable
+fun WavyIndicator(modifier: Modifier, color: Color) {
+    Canvas(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .padding(horizontal = 24.dp)
+    ) {
+        val path = Path().apply {
+            moveTo(0f, size.height / 2)
+            quadraticTo(
+                size.width / 4, 0f,
+                size.width / 2, size.height / 2
+            )
+            quadraticTo(
+                size.width * 3 / 4, size.height,
+                size.width, size.height / 2
+            )
+        }
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
+        )
     }
 }
 
