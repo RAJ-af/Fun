@@ -67,24 +67,42 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                 created_at = Instant.now().toString()
             )
             val inserted = supabase.postgrest["voice_rooms"].insert(room).decodeSingle<VoiceRoom>()
+            Log.d("VoiceRoomRepository", "Room created: ${inserted.id}")
+
+            // Explicitly join as host
             joinRoom(inserted.id, hostId, "host")
+
             inserted
         } catch (e: Exception) {
+            Log.e("VoiceRoomRepository", "Error creating room: ${e.message}")
             null
         }
     }
 
     suspend fun joinRoom(roomId: String, userId: String, role: String = "listener") = withContext(Dispatchers.IO) {
         try {
-            val participant = RoomParticipant(
-                room_id = roomId,
-                user_id = userId,
-                role = role,
-                joined_at = Instant.now().toString()
-            )
-            supabase.postgrest["room_participants"].insert(participant)
+            // Check if user is already in the room
+            val existing = supabase.postgrest["room_participants"].select {
+                filter {
+                    eq("room_id", roomId)
+                    eq("user_id", userId)
+                }
+            }.decodeSingleOrNull<RoomParticipant>()
+
+            if (existing == null) {
+                val participant = RoomParticipant(
+                    room_id = roomId,
+                    user_id = userId,
+                    role = role,
+                    joined_at = Instant.now().toString()
+                )
+                supabase.postgrest["room_participants"].insert(participant)
+                Log.d("VoiceRoomRepository", "User $userId joined room $roomId")
+            } else {
+                Log.d("VoiceRoomRepository", "User $userId is already in room $roomId")
+            }
         } catch (e: Exception) {
-            // Check for duplicates in actual app logic
+            Log.e("VoiceRoomRepository", "Error joining room: ${e.message}")
         }
     }
 
@@ -96,7 +114,26 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                     eq("user_id", userId)
                 }
             }
-        } catch (e: Exception) { }
+            Log.d("VoiceRoomRepository", "User $userId left room $roomId")
+
+            // Check if room is empty and delete it
+            val remaining = supabase.postgrest["room_participants"].select {
+                filter {
+                    eq("room_id", roomId)
+                }
+            }.decodeList<RoomParticipant>()
+
+            if (remaining.isEmpty()) {
+                supabase.postgrest["voice_rooms"].delete {
+                    filter {
+                        eq("id", roomId)
+                    }
+                }
+                Log.d("VoiceRoomRepository", "Room $roomId deleted as it's empty")
+            }
+        } catch (e: Exception) {
+            Log.e("VoiceRoomRepository", "Error leaving/cleaning room: ${e.message}")
+        }
     }
 
     suspend fun getParticipants(roomId: String): List<ParticipantWithProfile> = withContext(Dispatchers.IO) {

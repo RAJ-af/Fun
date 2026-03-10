@@ -27,7 +27,6 @@ fun CreateRoomScreen(
 ) {
     var title by remember { mutableStateOf("") }
     var language by remember { mutableStateOf("English") }
-    var topic by remember { mutableStateOf("") }
 
     val userId = authViewModel.currentUser?.id ?: ""
 
@@ -64,14 +63,6 @@ fun CreateRoomScreen(
             value = language,
             onValueChange = { language = it },
             label = "Language"
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        PremiumTextField(
-            value = topic,
-            onValueChange = { topic = it },
-            label = "Topic (Optional)"
         )
 
         Spacer(modifier = Modifier.weight(1f))
