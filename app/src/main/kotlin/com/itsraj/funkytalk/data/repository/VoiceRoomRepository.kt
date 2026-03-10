@@ -1,9 +1,11 @@
 package com.itsraj.funkytalk.data.repository
 
+import com.itsraj.funkytalk.data.model.ParticipantWithProfile
 import com.itsraj.funkytalk.data.model.RoomParticipant
 import com.itsraj.funkytalk.data.model.VoiceRoom
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.channel
@@ -63,6 +65,31 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
     suspend fun leaveRoom(roomId: String, userId: String) = withContext(Dispatchers.IO) {
         try {
             supabase.postgrest["room_participants"].delete {
+                filter {
+                    eq("room_id", roomId)
+                    eq("user_id", userId)
+                }
+            }
+        } catch (e: Exception) { }
+    }
+
+    suspend fun getParticipants(roomId: String): List<ParticipantWithProfile> = withContext(Dispatchers.IO) {
+        try {
+            supabase.postgrest["room_participants"]
+                .select(Columns.raw("*, profiles(*)")) {
+                    filter {
+                        eq("room_id", roomId)
+                    }
+                }
+                .decodeList<ParticipantWithProfile>()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun updateParticipantRole(roomId: String, userId: String, role: String) = withContext(Dispatchers.IO) {
+        try {
+            supabase.postgrest["room_participants"].update(mapOf("role" to role)) {
                 filter {
                     eq("room_id", roomId)
                     eq("user_id", userId)
