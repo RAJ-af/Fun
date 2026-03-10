@@ -28,8 +28,8 @@ enum class RoomCardLayout {
 
 @Composable
 fun FunkyRoomCard(
-    hashtag: String,
-    language: String,
+    hashtag: String?,
+    language: String?,
     participantCount: Int,
     avatars: List<String>,
     onJoin: () -> Unit,
@@ -41,7 +41,7 @@ fun FunkyRoomCard(
     val avatarSize = if (layoutType == RoomCardLayout.LARGE) 40.dp else 32.dp
 
     // Map language code to flag code
-    val flagCode = when(language.uppercase()) {
+    val flagCode = when(language?.uppercase()) {
         "EN" -> "us"
         "CN" -> "cn"
         "JP" -> "jp"
@@ -107,7 +107,7 @@ fun FunkyRoomCard(
                         CircularFlag(code = flagCode, size = 20.dp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = language.uppercase(),
+                            text = (language ?: "UN").uppercase(),
                             color = Color.Black.copy(alpha = 0.6f),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -135,7 +135,7 @@ fun FunkyRoomCard(
 
                 // Middle section: Hashtag Title
                 Text(
-                    text = "#$hashtag",
+                    text = "#${hashtag ?: "Untitled"}",
                     color = Color.Black,
                     fontSize = if (layoutType == RoomCardLayout.LARGE) 20.sp else 16.sp,
                     fontWeight = FontWeight.Black,

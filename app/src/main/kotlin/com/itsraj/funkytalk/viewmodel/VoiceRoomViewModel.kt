@@ -42,7 +42,11 @@ class VoiceRoomViewModel(
 
     fun fetchRooms() {
         viewModelScope.launch {
-            _rooms.value = repository.getActiveVoiceRooms()
+            try {
+                _rooms.value = repository.getActiveVoiceRooms()
+            } catch (e: Exception) {
+                _rooms.value = emptyList()
+            }
         }
     }
 

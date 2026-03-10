@@ -175,29 +175,53 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
             }
 
             // Room Feed
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                itemsIndexed(rooms) { index, room ->
-                    // Alternate layout types: Layout A (Large) and Layout B (Grid/Small)
-                    val layoutType = if (index % 3 == 0) RoomCardLayout.LARGE else RoomCardLayout.GRID
-                    FunkyRoomCard(
-                        hashtag = room.title.replace(" ", ""),
-                        language = room.language,
-                        participantCount = room.participantCount,
-                        avatars = room.participantAvatars,
-                        onJoin = {
-                            voiceRoomViewModel.joinRoom(room.id, userId)
-                            navController.navigate("voice_room")
-                        },
-                        layoutType = layoutType
-                    )
+            if (rooms.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = MangoYellow)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Looking for active rooms...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                        Button(
+                            onClick = { voiceRoomViewModel.fetchRooms() },
+                            modifier = Modifier.padding(top = 16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MangoYellow)
+                        ) {
+                            Text("Retry", color = Color.Black)
+                        }
+                    }
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    itemsIndexed(rooms) { index, room ->
+                        // Alternate layout types: Layout A (Large) and Layout B (Grid/Small)
+                        val layoutType = if (index % 3 == 0) RoomCardLayout.LARGE else RoomCardLayout.GRID
+                        FunkyRoomCard(
+                            hashtag = room.title?.replace(" ", ""),
+                            language = room.language,
+                            participantCount = room.participantCount,
+                            avatars = room.participantAvatars,
+                            onJoin = {
+                                voiceRoomViewModel.joinRoom(room.id, userId)
+                                navController.navigate("voice_room")
+                            },
+                            layoutType = layoutType
+                        )
+                    }
 
-                // Extra padding for bottom nav
-                item { Spacer(modifier = Modifier.height(100.dp)) }
+                    // Extra padding for bottom nav
+                    item { Spacer(modifier = Modifier.height(100.dp)) }
+                }
             }
         }
     }

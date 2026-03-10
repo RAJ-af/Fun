@@ -67,11 +67,11 @@ fun FunkyBottomNavigation(navController: NavController) {
                 .shadow(
                     elevation = 20.dp,
                     shape = RoundedCornerShape(40.dp),
-                    ambientColor = Color.Black,
-                    spotColor = Color.Black
+                    ambientColor = Color.Black.copy(alpha = 0.1f),
+                    spotColor = Color.Black.copy(alpha = 0.1f)
                 ),
             shape = RoundedCornerShape(40.dp),
-            color = Color(0xFF222222).copy(alpha = 0.95f) // Dark glass effect
+            color = Color.White
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -81,7 +81,7 @@ fun FunkyBottomNavigation(navController: NavController) {
                 items.forEach { item ->
                     val isSelected = currentRoute == item.screen.route
                     val scale by animateFloatAsState(if (isSelected) 1.2f else 1f)
-                    val iconColor by animateColorAsState(if (isSelected) MangoYellow else Color.White.copy(alpha = 0.4f))
+                    val iconColor by animateColorAsState(if (isSelected) MangoYellow else Color.Gray.copy(alpha = 0.6f))
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,

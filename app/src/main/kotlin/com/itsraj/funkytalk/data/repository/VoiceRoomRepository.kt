@@ -2,6 +2,7 @@ package com.itsraj.funkytalk.data.repository
 
 import com.itsraj.funkytalk.data.model.ParticipantWithProfile
 import com.itsraj.funkytalk.data.model.RoomParticipant
+import android.util.Log
 import com.itsraj.funkytalk.data.model.VoiceRoom
 import com.itsraj.funkytalk.data.model.VoiceRoomWithDetails
 import io.github.jan.supabase.SupabaseClient
@@ -20,15 +21,26 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
 
     suspend fun getActiveVoiceRooms(): List<VoiceRoomWithDetails> = withContext(Dispatchers.IO) {
         try {
+            Log.d("VoiceRoomRepository", "Fetching active voice rooms with participants...")
+            // Fetch rooms and their participants in a single query to avoid N+1
             val rooms = supabase.postgrest["voice_rooms"]
-                .select {
+                .select(Columns.raw("*, room_participants(*, profiles(*))")) {
                     order("created_at", order = Order.DESCENDING)
                     limit(50)
                 }
                 .decodeList<VoiceRoom>()
 
+            Log.d("VoiceRoomRepository", "Fetched ${rooms.size} rooms from database")
+
+            if (rooms.isEmpty()) {
+                Log.d("VoiceRoomRepository", "No rooms found in database")
+                return@withContext emptyList<VoiceRoomWithDetails>()
+            }
+
             rooms.map { room ->
-                val participants = getParticipants(room.id)
+                val participants = room.room_participants ?: emptyList()
+                Log.d("VoiceRoomRepository", "Room ${room.id} (${room.title}) has ${participants.size} participants")
+
                 VoiceRoomWithDetails(
                     id = room.id,
                     title = room.title,
@@ -40,7 +52,8 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                 )
             }
         } catch (e: Exception) {
-            emptyList()
+            Log.e("VoiceRoomRepository", "FATAL error in getActiveVoiceRooms: ${e.message}", e)
+            throw e
         }
     }
 
@@ -88,14 +101,17 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
 
     suspend fun getParticipants(roomId: String): List<ParticipantWithProfile> = withContext(Dispatchers.IO) {
         try {
-            supabase.postgrest["room_participants"]
+            val result = supabase.postgrest["room_participants"]
                 .select(Columns.raw("*, profiles(*)")) {
                     filter {
                         eq("room_id", roomId)
                     }
                 }
                 .decodeList<ParticipantWithProfile>()
+            Log.d("VoiceRoomRepository", "Fetched ${result.size} participants for room $roomId")
+            result
         } catch (e: Exception) {
+            Log.e("VoiceRoomRepository", "Error fetching participants for room $roomId: ${e.message}", e)
             emptyList()
         }
     }
