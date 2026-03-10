@@ -3,6 +3,7 @@ package com.itsraj.funkytalk.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.itsraj.funkytalk.data.model.ParticipantWithProfile
 import com.itsraj.funkytalk.data.model.VoiceRoom
 import com.itsraj.funkytalk.data.repository.VoiceRoomRepository
 import io.agora.rtc2.*
@@ -20,6 +21,9 @@ class VoiceRoomViewModel(
 
     private val _currentRoomId = MutableStateFlow<String?>(null)
     val currentRoomId: StateFlow<String?> = _currentRoomId
+
+    private val _participants = MutableStateFlow<List<ParticipantWithProfile>>(emptyList())
+    val participants: StateFlow<List<ParticipantWithProfile>> = _participants
 
     private val _isMuted = MutableStateFlow(false)
     val isMuted: StateFlow<Boolean> = _isMuted
@@ -45,9 +49,17 @@ class VoiceRoomViewModel(
     private fun observeRealtimeChanges() {
         viewModelScope.launch {
             repository.observeParticipantChanges().collect {
-                // For MVP, just re-fetch all rooms when any join/leave occurs
+                // Refetch rooms to update counts on Home
                 fetchRooms()
+                // Refetch participants for the active room
+                _currentRoomId.value?.let { fetchParticipants(it) }
             }
+        }
+    }
+
+    fun fetchParticipants(roomId: String) {
+        viewModelScope.launch {
+            _participants.value = repository.getParticipants(roomId)
         }
     }
 
@@ -88,6 +100,7 @@ class VoiceRoomViewModel(
         viewModelScope.launch {
             _currentRoomId.value = roomId
             repository.joinRoom(roomId, userId)
+            fetchParticipants(roomId)
             rtcEngine?.joinChannel(null, roomId, null, 0)
         }
     }
@@ -98,6 +111,14 @@ class VoiceRoomViewModel(
             repository.leaveRoom(roomId, userId)
             rtcEngine?.leaveChannel()
             _currentRoomId.value = null
+            _participants.value = emptyList()
+        }
+    }
+
+    fun raiseHand(userId: String) {
+        val roomId = _currentRoomId.value ?: return
+        viewModelScope.launch {
+            repository.updateParticipantRole(roomId, userId, "speaker")
         }
     }
 
