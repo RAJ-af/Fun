@@ -30,7 +30,6 @@ enum class RoomCardLayout {
 fun FunkyRoomCard(
     hashtag: String,
     language: String,
-    languageCode: String,
     participantCount: Int,
     avatars: List<String>,
     onJoin: () -> Unit,
@@ -40,6 +39,25 @@ fun FunkyRoomCard(
     val cardHeight = if (layoutType == RoomCardLayout.LARGE) 200.dp else 160.dp
     val avatarCount = if (layoutType == RoomCardLayout.LARGE) 4 else 3
     val avatarSize = if (layoutType == RoomCardLayout.LARGE) 40.dp else 32.dp
+
+    // Map language code to flag code
+    val flagCode = when(language.uppercase()) {
+        "EN" -> "us"
+        "CN" -> "cn"
+        "JP" -> "jp"
+        "KR" -> "kr"
+        "DE" -> "de"
+        "FR" -> "fr"
+        "ES" -> "es"
+        "BR" -> "br"
+        "ID" -> "id"
+        "RU" -> "ru"
+        "IT" -> "it"
+        "TR" -> "tr"
+        "VN" -> "vn"
+        "TH" -> "th"
+        else -> "un" // Unknown
+    }
 
     Surface(
         modifier = modifier
@@ -54,8 +72,6 @@ fun FunkyRoomCard(
         color = Color.White
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Subtle gradient overlay for text readability at bottom if there was an image bg,
-            // but we use white bg as requested. Still adding it for "premium" feel.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -88,10 +104,10 @@ fun FunkyRoomCard(
                             .background(Color(0xFFF5F5F5))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        CircularFlag(code = languageCode, size = 20.dp)
+                        CircularFlag(code = flagCode, size = 20.dp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = language,
+                            text = language.uppercase(),
                             color = Color.Black.copy(alpha = 0.6f),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -153,7 +169,7 @@ fun FunkyRoomCard(
                             }
                         }
 
-                        if (avatars.size > avatarCount) {
+                        if (participantCount > avatars.size && participantCount > avatarCount) {
                             Box(
                                 modifier = Modifier
                                     .size(avatarSize)
@@ -163,7 +179,7 @@ fun FunkyRoomCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "+${avatars.size - avatarCount}",
+                                    text = "+${participantCount - avatars.size.coerceAtMost(avatarCount)}",
                                     color = Color.Black,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold

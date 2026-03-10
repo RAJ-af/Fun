@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsraj.funkytalk.data.model.ParticipantWithProfile
-import com.itsraj.funkytalk.data.model.VoiceRoom
+import com.itsraj.funkytalk.data.model.VoiceRoomWithDetails
 import com.itsraj.funkytalk.data.repository.VoiceRoomRepository
 import io.agora.rtc2.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +16,8 @@ class VoiceRoomViewModel(
     private val repository: VoiceRoomRepository
 ) : AndroidViewModel(application) {
 
-    private val _rooms = MutableStateFlow<List<VoiceRoom>>(emptyList())
-    val rooms: StateFlow<List<VoiceRoom>> = _rooms
+    private val _rooms = MutableStateFlow<List<VoiceRoomWithDetails>>(emptyList())
+    val rooms: StateFlow<List<VoiceRoomWithDetails>> = _rooms
 
     private val _currentRoomId = MutableStateFlow<String?>(null)
     val currentRoomId: StateFlow<String?> = _currentRoomId
@@ -48,11 +48,18 @@ class VoiceRoomViewModel(
 
     private fun observeRealtimeChanges() {
         viewModelScope.launch {
-            repository.observeParticipantChanges().collect {
-                // Refetch rooms to update counts on Home
-                fetchRooms()
-                // Refetch participants for the active room
-                _currentRoomId.value?.let { fetchParticipants(it) }
+            launch {
+                repository.observeParticipantChanges().collect {
+                    // Refetch rooms to update counts on Home
+                    fetchRooms()
+                    // Refetch participants for the active room
+                    _currentRoomId.value?.let { fetchParticipants(it) }
+                }
+            }
+            launch {
+                repository.observeRoomChanges().collect {
+                    fetchRooms()
+                }
             }
         }
     }

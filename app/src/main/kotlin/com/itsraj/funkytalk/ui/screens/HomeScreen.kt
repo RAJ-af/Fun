@@ -49,6 +49,11 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
     val rooms by voiceRoomViewModel.rooms.collectAsState()
     val userId = authViewModel.currentUser?.id ?: ""
 
+    // Initial fetch when entering the screen
+    LaunchedEffect(Unit) {
+        voiceRoomViewModel.fetchRooms()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -181,9 +186,8 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                     FunkyRoomCard(
                         hashtag = room.title.replace(" ", ""),
                         language = room.language,
-                        languageCode = room.country_code,
-                        participantCount = room.participants_count,
-                        avatars = room.participant_avatars,
+                        participantCount = room.participantCount,
+                        avatars = room.participantAvatars,
                         onJoin = {
                             voiceRoomViewModel.joinRoom(room.id, userId)
                             navController.navigate("voice_room")
@@ -246,11 +250,3 @@ fun WavyIndicator(modifier: Modifier, color: Color) {
         )
     }
 }
-
-data class YeetalkRoom(
-    val title: String,
-    val languageName: String,
-    val flag: String,
-    val participantCount: Int,
-    val avatars: List<String>
-)

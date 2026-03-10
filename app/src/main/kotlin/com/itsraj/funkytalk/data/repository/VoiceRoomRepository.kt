@@ -3,6 +3,7 @@ package com.itsraj.funkytalk.data.repository
 import com.itsraj.funkytalk.data.model.ParticipantWithProfile
 import com.itsraj.funkytalk.data.model.RoomParticipant
 import com.itsraj.funkytalk.data.model.VoiceRoom
+import com.itsraj.funkytalk.data.model.VoiceRoomWithDetails
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
@@ -17,14 +18,27 @@ import java.time.Instant
 
 class VoiceRoomRepository(private val supabase: SupabaseClient) {
 
-    suspend fun getActiveVoiceRooms(): List<VoiceRoom> = withContext(Dispatchers.IO) {
+    suspend fun getActiveVoiceRooms(): List<VoiceRoomWithDetails> = withContext(Dispatchers.IO) {
         try {
-            supabase.postgrest["voice_rooms"]
+            val rooms = supabase.postgrest["voice_rooms"]
                 .select {
                     order("created_at", order = Order.DESCENDING)
                     limit(50)
                 }
                 .decodeList<VoiceRoom>()
+
+            rooms.map { room ->
+                val participants = getParticipants(room.id)
+                VoiceRoomWithDetails(
+                    id = room.id,
+                    title = room.title,
+                    language = room.language,
+                    host_id = room.host_id,
+                    created_at = room.created_at,
+                    participantCount = participants.size,
+                    participantAvatars = participants.take(4).mapNotNull { it.profiles.avatar_url }
+                )
+            }
         } catch (e: Exception) {
             emptyList()
         }
@@ -36,7 +50,6 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                 id = java.util.UUID.randomUUID().toString(),
                 title = title,
                 language = language,
-                country_code = "us", // Default
                 host_id = hostId,
                 created_at = Instant.now().toString()
             )
@@ -102,6 +115,14 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
         val channel = supabase.channel("room_participants_changes")
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "room_participants"
+        }
+        return flow
+    }
+
+    fun observeRoomChanges(): Flow<PostgresAction> {
+        val channel = supabase.channel("voice_rooms_changes")
+        val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+            table = "voice_rooms"
         }
         return flow
     }
