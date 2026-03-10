@@ -16,11 +16,15 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.MoreVert
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -36,6 +40,27 @@ import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 
 @Composable
 fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel, authViewModel: com.itsraj.funkytalk.viewmodel.AuthViewModel) {
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission granted, can join and speak
+        } else {
+            // Permission denied, handle accordingly
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
     val isMuted by viewModel.isMuted.collectAsState()
     val isJoined by viewModel.isJoined.collectAsState()
     val currentRoomId by viewModel.currentRoomId.collectAsState()
