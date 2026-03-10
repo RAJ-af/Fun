@@ -70,6 +70,14 @@ fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel,
     val room = rooms.find { it.id == currentRoomId }
     val userId = authViewModel.currentUser?.id ?: ""
 
+    DisposableEffect(currentRoomId) {
+        onDispose {
+            if (currentRoomId != null) {
+                viewModel.leaveRoom(userId)
+            }
+        }
+    }
+
     val speakers = participants.filter { it.role == "host" || it.role == "speaker" }
     val listeners = participants.filter { it.role == "listener" }
 
@@ -206,8 +214,9 @@ fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel,
                 // Leave Room Button
                 Button(
                     onClick = {
-                        viewModel.leaveRoom(userId)
-                        navController.popBackStack()
+                        viewModel.leaveRoom(userId) {
+                            navController.popBackStack()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                     shape = RoundedCornerShape(28.dp),

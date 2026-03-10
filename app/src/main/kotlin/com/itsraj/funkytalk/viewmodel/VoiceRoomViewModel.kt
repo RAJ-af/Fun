@@ -116,13 +116,14 @@ class VoiceRoomViewModel(
         }
     }
 
-    fun leaveRoom(userId: String) {
+    fun leaveRoom(userId: String, onComplete: () -> Unit = {}) {
         val roomId = _currentRoomId.value ?: return
         viewModelScope.launch {
             repository.leaveRoom(roomId, userId)
             rtcEngine?.leaveChannel()
             _currentRoomId.value = null
             _participants.value = emptyList()
+            onComplete()
         }
     }
 
