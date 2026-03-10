@@ -7,9 +7,17 @@ data class VoiceRoom(
     val id: String,
     val title: String,
     val language: String,
-    val country_code: String,
     val host_id: String,
-    val participants_count: Int = 0,
-    val participant_avatars: List<String> = emptyList(),
     val created_at: String
+)
+
+@Serializable
+data class VoiceRoomWithDetails(
+    val id: String,
+    val title: String,
+    val language: String,
+    val host_id: String,
+    val created_at: String,
+    val participantCount: Int,
+    val participantAvatars: List<String>
 )
