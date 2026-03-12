@@ -24,7 +24,7 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
             Log.d("VoiceRoomRepository", "Fetching active voice rooms (filter: $tagFilter)...")
             val rooms = supabase.postgrest["voice_rooms"]
                 .select(Columns.raw("*, room_participants(*, profiles(*))")) {
-                    if (tagFilter != null && tagFilter != "Discover") {
+                    if (tagFilter != null && tagFilter != "discover") {
                         filter {
                             val dbTag = tagFilter.lowercase()
                             eq("tag", dbTag)
@@ -65,6 +65,16 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
         }
     }
 
+    suspend fun getRoom(roomId: String): VoiceRoom? = withContext(Dispatchers.IO) {
+        try {
+            supabase.postgrest["voice_rooms"].select {
+                filter { eq("id", roomId) }
+            }.decodeSingleOrNull<VoiceRoom>()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun createRoom(
         title: String,
         language: String,
@@ -85,14 +95,14 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                 created_at = Instant.now().toString()
             )
             val inserted = supabase.postgrest["voice_rooms"].insert(room).decodeSingle<VoiceRoom>()
-            Log.d("VoiceRoomRepository", "Room created: ${inserted.id}")
+            Log.d("VoiceRoomRepository", "Room created successfully: ${inserted.id}")
 
-            // Explicitly join as host
+            // Creator must be host
             joinRoom(inserted.id, hostId, "host")
 
             inserted
         } catch (e: Exception) {
-            Log.e("VoiceRoomRepository", "Error creating room: ${e.message}")
+            Log.e("VoiceRoomRepository", "Room creation failure: ${e.message}")
             null
         }
     }

@@ -44,6 +44,7 @@ fun CreateRoomScreen(
     var selectedCountry by remember { mutableStateOf(allCountries.first { it.code == "us" }) }
     var selectedTag by remember { mutableStateOf("Discover") }
     var roomType by remember { mutableStateOf("public") }
+    var isCreating by remember { mutableStateOf(false) }
 
     val allTags = listOf("Discover", "Languages", "Music", "Friends", "Games", "Study")
     val userId = authViewModel.currentUser?.id ?: ""
@@ -201,9 +202,10 @@ fun CreateRoomScreen(
             shadowElevation = 16.dp
         ) {
             PremiumButton(
-                text = "Create Room",
+                text = if (isCreating) "Creating..." else "Create Room",
                 onClick = {
-                    if (title.isNotBlank()) {
+                    if (title.isNotBlank() && !isCreating) {
+                        isCreating = true
                         voiceRoomViewModel.createRoom(
                             title = title,
                             language = selectedLanguage.name,
@@ -212,6 +214,7 @@ fun CreateRoomScreen(
                             roomType = roomType,
                             hostId = userId
                         ) {
+                            isCreating = false
                             navController.navigate("voice_room")
                         }
                     }
