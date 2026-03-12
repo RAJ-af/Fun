@@ -45,6 +45,9 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                     id = room.id,
                     title = room.title,
                     language = room.language,
+                    country_code = room.country_code,
+                    tags = room.tags,
+                    room_type = room.room_type,
                     host_id = room.host_id,
                     created_at = room.created_at,
                     participantCount = participants.size,
@@ -57,12 +60,22 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
         }
     }
 
-    suspend fun createRoom(title: String, language: String, hostId: String): VoiceRoom? = withContext(Dispatchers.IO) {
+    suspend fun createRoom(
+        title: String,
+        language: String,
+        countryCode: String,
+        tags: List<String>,
+        roomType: String,
+        hostId: String
+    ): VoiceRoom? = withContext(Dispatchers.IO) {
         try {
             val room = VoiceRoom(
                 id = java.util.UUID.randomUUID().toString(),
                 title = title,
                 language = language,
+                country_code = countryCode,
+                tags = tags,
+                room_type = roomType,
                 host_id = hostId,
                 created_at = Instant.now().toString()
             )

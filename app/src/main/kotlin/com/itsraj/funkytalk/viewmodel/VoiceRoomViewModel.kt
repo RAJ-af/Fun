@@ -17,7 +17,11 @@ class VoiceRoomViewModel(
 ) : AndroidViewModel(application) {
 
     private val _rooms = MutableStateFlow<List<VoiceRoomWithDetails>>(emptyList())
-    val rooms: StateFlow<List<VoiceRoomWithDetails>> = _rooms
+    private val _selectedTag = MutableStateFlow("Discover")
+    val selectedTag: StateFlow<String> = _selectedTag
+
+    private val _filteredRooms = MutableStateFlow<List<VoiceRoomWithDetails>>(emptyList())
+    val rooms: StateFlow<List<VoiceRoomWithDetails>> = _filteredRooms
 
     private val _currentRoomId = MutableStateFlow<String?>(null)
     val currentRoomId: StateFlow<String?> = _currentRoomId
@@ -43,9 +47,28 @@ class VoiceRoomViewModel(
     fun fetchRooms() {
         viewModelScope.launch {
             try {
-                _rooms.value = repository.getActiveVoiceRooms()
+                val allRooms = repository.getActiveVoiceRooms()
+                _rooms.value = allRooms
+                applyFilter()
             } catch (e: Exception) {
                 _rooms.value = emptyList()
+                _filteredRooms.value = emptyList()
+            }
+        }
+    }
+
+    fun setSelectedTag(tag: String) {
+        _selectedTag.value = tag
+        applyFilter()
+    }
+
+    private fun applyFilter() {
+        val currentTag = _selectedTag.value
+        _filteredRooms.value = if (currentTag == "Discover") {
+            _rooms.value
+        } else {
+            _rooms.value.filter { room ->
+                room.tags?.contains(currentTag) == true
             }
         }
     }
@@ -96,9 +119,17 @@ class VoiceRoomViewModel(
         }
     }
 
-    fun createRoom(title: String, language: String, hostId: String, onSuccess: () -> Unit) {
+    fun createRoom(
+        title: String,
+        language: String,
+        countryCode: String,
+        tags: List<String>,
+        roomType: String,
+        hostId: String,
+        onSuccess: () -> Unit
+    ) {
         viewModelScope.launch {
-            val room = repository.createRoom(title, language, hostId)
+            val room = repository.createRoom(title, language, countryCode, tags, roomType, hostId)
             if (room != null) {
                 _currentRoomId.value = room.id
                 rtcEngine?.joinChannel(null, room.id, null, 0)
