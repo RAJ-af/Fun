@@ -15,9 +15,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Announcement
-import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Campaign
+import androidx.compose.material.icons.outlined.MicNone
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -162,25 +163,25 @@ fun HomeScreen(
                 ) {
                     IconButton(
                         onClick = { navController.navigate(Screen.CreateRoom.route) },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Mic,
+                            imageVector = Icons.Outlined.AddCircle,
                             contentDescription = "Create Room",
-                            tint = Color.Black,
-                            modifier = Modifier.size(28.dp)
+                            tint = MangoYellow,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp)) // Proper spacing
+                    Spacer(modifier = Modifier.width(8.dp)) // Proper spacing
                     IconButton(
                         onClick = { navController.navigate(Screen.Announcements.route) },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Announcement,
+                            imageVector = Icons.Outlined.Campaign,
                             contentDescription = "Announcements",
-                            tint = Color.Black,
-                            modifier = Modifier.size(28.dp)
+                            tint = MangoYellow,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }
@@ -231,6 +232,7 @@ fun HomeScreen(
                             hashtag = room.title?.replace(" ", ""),
                             language = room.language,
                             countryCode = room.country_code,
+                            tag = room.tag,
                             participantCount = room.participantCount,
                             avatars = room.participantAvatars,
                             onJoin = {
