@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsraj.funkytalk.data.model.ParticipantWithProfile
+import com.itsraj.funkytalk.data.model.RoomMessageWithProfile
 import com.itsraj.funkytalk.data.model.VoiceRoomWithDetails
 import com.itsraj.funkytalk.data.repository.VoiceRoomRepository
 import io.agora.rtc2.*
@@ -34,6 +35,9 @@ class VoiceRoomViewModel(
 
     private val _participants = MutableStateFlow<List<ParticipantWithProfile>>(emptyList())
     val participants: StateFlow<List<ParticipantWithProfile>> = _participants
+
+    private val _messages = MutableStateFlow<List<RoomMessageWithProfile>>(emptyList())
+    val messages: StateFlow<List<RoomMessageWithProfile>> = _messages
 
     private val _isMuted = MutableStateFlow(false)
     val isMuted: StateFlow<Boolean> = _isMuted
@@ -159,7 +163,30 @@ class VoiceRoomViewModel(
 
             repository.joinRoom(roomId, userId, role)
             fetchParticipants(roomId)
+            fetchMessages(roomId)
+            observeRoomMessages(roomId)
             rtcEngine?.joinChannel(null, roomId, null, 0)
+        }
+    }
+
+    private fun fetchMessages(roomId: String) {
+        viewModelScope.launch {
+            _messages.value = repository.getRoomMessages(roomId)
+        }
+    }
+
+    private fun observeRoomMessages(roomId: String) {
+        viewModelScope.launch {
+            repository.observeRoomMessages(roomId).collect {
+                fetchMessages(roomId)
+            }
+        }
+    }
+
+    fun sendMessage(userId: String, content: String) {
+        val roomId = _currentRoomId.value ?: return
+        viewModelScope.launch {
+            repository.sendRoomMessage(roomId, userId, content)
         }
     }
 
