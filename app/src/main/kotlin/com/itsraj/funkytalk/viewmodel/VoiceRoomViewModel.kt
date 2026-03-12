@@ -140,7 +140,12 @@ class VoiceRoomViewModel(
     fun joinRoom(roomId: String, userId: String) {
         viewModelScope.launch {
             _currentRoomId.value = roomId
-            repository.joinRoom(roomId, userId)
+
+            // Determine role: host if userId matches room.host_id
+            val room = repository.getRoom(roomId)
+            val role = if (room?.host_id == userId) "host" else "listener"
+
+            repository.joinRoom(roomId, userId, role)
             fetchParticipants(roomId)
             rtcEngine?.joinChannel(null, roomId, null, 0)
         }
