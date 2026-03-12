@@ -19,12 +19,17 @@ import java.time.Instant
 
 class VoiceRoomRepository(private val supabase: SupabaseClient) {
 
-    suspend fun getActiveVoiceRooms(): List<VoiceRoomWithDetails> = withContext(Dispatchers.IO) {
+    suspend fun getActiveVoiceRooms(tagFilter: String? = null): List<VoiceRoomWithDetails> = withContext(Dispatchers.IO) {
         try {
-            Log.d("VoiceRoomRepository", "Fetching active voice rooms with participants...")
-            // Fetch rooms and their participants in a single query to avoid N+1
+            Log.d("VoiceRoomRepository", "Fetching active voice rooms (filter: $tagFilter)...")
             val rooms = supabase.postgrest["voice_rooms"]
                 .select(Columns.raw("*, room_participants(*, profiles(*))")) {
+                    if (tagFilter != null && tagFilter != "Discover") {
+                        filter {
+                            val dbTag = tagFilter.lowercase()
+                            eq("tag", dbTag)
+                        }
+                    }
                     order("created_at", order = Order.DESCENDING)
                     limit(50)
                 }
@@ -46,7 +51,7 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                     title = room.title,
                     language = room.language,
                     country_code = room.country_code,
-                    tags = room.tags,
+                    tag = room.tag,
                     room_type = room.room_type,
                     host_id = room.host_id,
                     created_at = room.created_at,
@@ -64,7 +69,7 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
         title: String,
         language: String,
         countryCode: String,
-        tags: List<String>,
+        tag: String,
         roomType: String,
         hostId: String
     ): VoiceRoom? = withContext(Dispatchers.IO) {
@@ -74,7 +79,7 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                 title = title,
                 language = language,
                 country_code = countryCode,
-                tags = tags,
+                tag = tag,
                 room_type = roomType,
                 host_id = hostId,
                 created_at = Instant.now().toString()

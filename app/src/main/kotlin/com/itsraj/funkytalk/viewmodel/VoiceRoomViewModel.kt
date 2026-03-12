@@ -47,9 +47,15 @@ class VoiceRoomViewModel(
     fun fetchRooms() {
         viewModelScope.launch {
             try {
-                val allRooms = repository.getActiveVoiceRooms()
-                _rooms.value = allRooms
-                applyFilter()
+                val uiTag = _selectedTag.value
+                val dbTag = when(uiTag) {
+                    "Languages" -> "language"
+                    "Discover" -> "Discover"
+                    else -> uiTag.lowercase()
+                }
+                val fetchedRooms = repository.getActiveVoiceRooms(if (dbTag == "Discover") null else dbTag)
+                _rooms.value = fetchedRooms
+                _filteredRooms.value = fetchedRooms
             } catch (e: Exception) {
                 _rooms.value = emptyList()
                 _filteredRooms.value = emptyList()
@@ -59,18 +65,7 @@ class VoiceRoomViewModel(
 
     fun setSelectedTag(tag: String) {
         _selectedTag.value = tag
-        applyFilter()
-    }
-
-    private fun applyFilter() {
-        val currentTag = _selectedTag.value
-        _filteredRooms.value = if (currentTag == "Discover") {
-            _rooms.value
-        } else {
-            _rooms.value.filter { room ->
-                room.tags?.contains(currentTag) == true
-            }
-        }
+        fetchRooms()
     }
 
     private fun observeRealtimeChanges() {
@@ -123,13 +118,17 @@ class VoiceRoomViewModel(
         title: String,
         language: String,
         countryCode: String,
-        tags: List<String>,
+        tag: String,
         roomType: String,
         hostId: String,
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
-            val room = repository.createRoom(title, language, countryCode, tags, roomType, hostId)
+            val dbTag = when(tag) {
+                "Languages" -> "language"
+                else -> tag.lowercase()
+            }
+            val room = repository.createRoom(title, language, countryCode, dbTag, roomType, hostId)
             if (room != null) {
                 _currentRoomId.value = room.id
                 rtcEngine?.joinChannel(null, room.id, null, 0)

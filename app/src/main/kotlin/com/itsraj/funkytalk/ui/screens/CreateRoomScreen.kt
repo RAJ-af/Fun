@@ -42,10 +42,10 @@ fun CreateRoomScreen(
     var title by remember { mutableStateOf("") }
     var selectedLanguage by remember { mutableStateOf(allLanguages.first()) }
     var selectedCountry by remember { mutableStateOf(allCountries.first { it.code == "us" }) }
-    var selectedTags by remember { mutableStateOf(setOf<String>()) }
+    var selectedTag by remember { mutableStateOf("Discover") }
     var roomType by remember { mutableStateOf("public") }
 
-    val allTags = listOf("Languages", "Music", "Friends", "Games", "Study")
+    val allTags = listOf("Discover", "Languages", "Music", "Friends", "Games", "Study")
     val userId = authViewModel.currentUser?.id ?: ""
 
     Column(
@@ -144,19 +144,17 @@ fun CreateRoomScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Tag Selector
-            Text(text = "Tags", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
+            Text(text = "Tag", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
             Spacer(modifier = Modifier.height(12.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 allTags.forEach { tag ->
-                    val isSelected = selectedTags.contains(tag)
+                    val isSelected = selectedTag == tag
                     FilterChip(
                         selected = isSelected,
-                        onClick = {
-                            selectedTags = if (isSelected) selectedTags - tag else selectedTags + tag
-                        },
+                        onClick = { selectedTag = tag },
                         label = { Text(tag) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MangoYellow,
@@ -210,7 +208,7 @@ fun CreateRoomScreen(
                             title = title,
                             language = selectedLanguage.name,
                             countryCode = selectedCountry.code,
-                            tags = selectedTags.toList(),
+                            tag = selectedTag,
                             roomType = roomType,
                             hostId = userId
                         ) {
