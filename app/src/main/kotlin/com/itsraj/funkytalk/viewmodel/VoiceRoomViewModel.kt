@@ -7,9 +7,15 @@ import com.itsraj.funkytalk.data.model.ParticipantWithProfile
 import com.itsraj.funkytalk.data.model.VoiceRoomWithDetails
 import com.itsraj.funkytalk.data.repository.VoiceRoomRepository
 import io.agora.rtc2.*
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+sealed class VoiceRoomNavigationEvent {
+    data class NavigateToRoom(val roomId: String, val role: String) : VoiceRoomNavigationEvent()
+}
 
 class VoiceRoomViewModel(
     application: Application,
@@ -34,6 +40,9 @@ class VoiceRoomViewModel(
 
     private val _isJoined = MutableStateFlow(false)
     val isJoined: StateFlow<Boolean> = _isJoined
+
+    private val _navigationEvents = MutableSharedFlow<VoiceRoomNavigationEvent>()
+    val navigationEvents: SharedFlow<VoiceRoomNavigationEvent> = _navigationEvents
 
     private val appId = "7aed853cb4f141028bf82a0c8bfef3a6"
     private var rtcEngine: RtcEngine? = null
@@ -135,6 +144,7 @@ class VoiceRoomViewModel(
                 // Host joins the channel immediately
                 rtcEngine?.joinChannel(null, room.id, null, 0)
                 onSuccess(room.id)
+                _navigationEvents.emit(VoiceRoomNavigationEvent.NavigateToRoom(room.id, "host"))
             }
         }
     }

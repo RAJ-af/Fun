@@ -236,8 +236,7 @@ fun HomeScreen(
                             participantCount = room.participantCount,
                             avatars = room.participantAvatars,
                             onJoin = {
-                                voiceRoomViewModel.joinRoom(room.id, userId)
-                                navController.navigate("voice_room")
+                                navController.navigate(Screen.VoiceRoom.createRoute(room.id, "listener"))
                             },
                             layoutType = layoutType
                         )
