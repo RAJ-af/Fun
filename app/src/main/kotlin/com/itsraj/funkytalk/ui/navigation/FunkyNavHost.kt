@@ -109,7 +109,20 @@ fun FunkyNavHost(
         composable(Screen.Discover.route) { DiscoverScreen() }
         composable(Screen.Chats.route) { ChatsScreen(navController) }
         composable(Screen.Profile.route) { ProfileScreen() }
-        composable(Screen.VoiceRoom.route) { VoiceRoomScreen(navController, voiceRoomViewModel, authViewModel) }
+        composable(
+            route = Screen.VoiceRoom.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("roomId") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("role") {
+                    type = androidx.navigation.NavType.StringType
+                    defaultValue = "listener"
+                }
+            )
+        ) { backStackEntry ->
+            val roomId = backStackEntry.arguments?.getString("roomId") ?: ""
+            val role = backStackEntry.arguments?.getString("role") ?: "listener"
+            VoiceRoomScreen(navController, voiceRoomViewModel, authViewModel, roomId, role)
+        }
         composable(Screen.CreateRoom.route) { CreateRoomScreen(navController, voiceRoomViewModel, authViewModel) }
         composable(Screen.Announcements.route) { AnnouncementScreen(navController, announcementViewModel) }
 

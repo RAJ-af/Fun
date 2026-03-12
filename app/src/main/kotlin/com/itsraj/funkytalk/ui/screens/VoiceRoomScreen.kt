@@ -39,7 +39,13 @@ import com.itsraj.funkytalk.ui.theme.MangoYellow
 import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 
 @Composable
-fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel, authViewModel: com.itsraj.funkytalk.viewmodel.AuthViewModel) {
+fun VoiceRoomScreen(
+    navController: NavController,
+    viewModel: VoiceRoomViewModel,
+    authViewModel: com.itsraj.funkytalk.viewmodel.AuthViewModel,
+    roomId: String,
+    role: String
+) {
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -63,18 +69,20 @@ fun VoiceRoomScreen(navController: NavController, viewModel: VoiceRoomViewModel,
 
     val isMuted by viewModel.isMuted.collectAsState()
     val isJoined by viewModel.isJoined.collectAsState()
-    val currentRoomId by viewModel.currentRoomId.collectAsState()
     val rooms by viewModel.rooms.collectAsState()
     val participants by viewModel.participants.collectAsState()
 
-    val room = rooms.find { it.id == currentRoomId }
+    val room = rooms.find { it.id == roomId }
     val userId = authViewModel.currentUser?.id ?: ""
 
-    DisposableEffect(currentRoomId) {
+    // Initial join if not already in the room
+    LaunchedEffect(roomId) {
+        viewModel.joinRoom(roomId, userId)
+    }
+
+    DisposableEffect(roomId) {
         onDispose {
-            if (currentRoomId != null) {
-                viewModel.leaveRoom(userId)
-            }
+            viewModel.leaveRoom(userId)
         }
     }
 

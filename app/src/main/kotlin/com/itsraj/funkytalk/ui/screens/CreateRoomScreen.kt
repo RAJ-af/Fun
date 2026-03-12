@@ -28,8 +28,10 @@ import com.itsraj.funkytalk.data.model.allLanguages
 import com.itsraj.funkytalk.ui.components.CircularFlag
 import com.itsraj.funkytalk.ui.components.PremiumButton
 import com.itsraj.funkytalk.ui.components.PremiumTextField
+import com.itsraj.funkytalk.ui.navigation.Screen
 import com.itsraj.funkytalk.ui.theme.MangoYellow
 import com.itsraj.funkytalk.viewmodel.AuthViewModel
+import com.itsraj.funkytalk.viewmodel.VoiceRoomNavigationEvent
 import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -48,6 +50,16 @@ fun CreateRoomScreen(
 
     val allTags = listOf("Discover", "Languages", "Music", "Friends", "Games", "Study")
     val userId = authViewModel.currentUser?.id ?: ""
+
+    LaunchedEffect(Unit) {
+        voiceRoomViewModel.navigationEvents.collect { event ->
+            if (event is VoiceRoomNavigationEvent.NavigateToRoom) {
+                navController.navigate(Screen.VoiceRoom.createRoute(event.roomId, event.role)) {
+                    popUpTo(Screen.CreateRoom.route) { inclusive = true }
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -215,10 +227,6 @@ fun CreateRoomScreen(
                             hostId = userId
                         ) { roomId ->
                             isCreating = false
-                            // Navigate and clear create screen from backstack
-                            navController.navigate("voice_room") {
-                                popUpTo("create_room") { inclusive = true }
-                            }
                         }
                     }
                 },
