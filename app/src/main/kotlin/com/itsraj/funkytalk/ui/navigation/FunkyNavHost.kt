@@ -42,8 +42,7 @@ fun MainAppScreen() {
         Screen.Moments.route,
         Screen.Discover.route,
         Screen.Chats.route,
-        Screen.Profile.route,
-        Screen.VoiceRoom.route
+        Screen.Profile.route
     )
 
     Scaffold(

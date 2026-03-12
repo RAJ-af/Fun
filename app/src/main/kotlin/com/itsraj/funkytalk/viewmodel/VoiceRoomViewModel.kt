@@ -45,6 +45,9 @@ class VoiceRoomViewModel(
     private val _isJoined = MutableStateFlow(false)
     val isJoined: StateFlow<Boolean> = _isJoined
 
+    private val _activeSpeakers = MutableStateFlow<Set<Int>>(emptySet())
+    val activeSpeakers: StateFlow<Set<Int>> = _activeSpeakers
+
     private val _navigationEvents = MutableSharedFlow<VoiceRoomNavigationEvent>()
     val navigationEvents: SharedFlow<VoiceRoomNavigationEvent> = _navigationEvents
 
@@ -117,9 +120,16 @@ class VoiceRoomViewModel(
 
                 override fun onLeaveChannel(stats: RtcStats?) {
                     _isJoined.value = false
+                    _activeSpeakers.value = emptySet()
+                }
+
+                override fun onAudioVolumeIndication(speakers: Array<out IRtcEngineEventHandler.AudioVolumeInfo>?, totalVolume: Int) {
+                    val activeIds = speakers?.filter { it.volume > 5 }?.map { it.uid }?.toSet() ?: emptySet()
+                    _activeSpeakers.value = activeIds
                 }
             }
             rtcEngine = RtcEngine.create(config)
+            rtcEngine?.enableAudioVolumeIndication(200, 3, true)
             rtcEngine?.setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING)
             rtcEngine?.setClientRole(Constants.CLIENT_ROLE_BROADCASTER)
         } catch (e: Exception) {
