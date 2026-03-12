@@ -15,8 +15,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Campaign
-import androidx.compose.material.icons.outlined.AddBox
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.Announcement
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -39,14 +40,21 @@ import com.itsraj.funkytalk.ui.components.FunkyRoomCard
 import com.itsraj.funkytalk.ui.components.RoomCardLayout
 import com.itsraj.funkytalk.ui.navigation.Screen
 import com.itsraj.funkytalk.ui.theme.MangoYellow
+import com.itsraj.funkytalk.viewmodel.AnnouncementViewModel
 import com.itsraj.funkytalk.viewmodel.VoiceRoomViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewModel, authViewModel: com.itsraj.funkytalk.viewmodel.AuthViewModel) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tags = listOf("Recommend", "Language", "CN", "EN", "B.Indo", "Music", "Make Friends", "Game")
+fun HomeScreen(
+    navController: NavController,
+    voiceRoomViewModel: VoiceRoomViewModel,
+    authViewModel: com.itsraj.funkytalk.viewmodel.AuthViewModel,
+    announcementViewModel: AnnouncementViewModel
+) {
+    val selectedTag by voiceRoomViewModel.selectedTag.collectAsState()
+    val tags = listOf("Discover", "Languages", "Music", "Friends", "Games", "Study")
 
     val rooms by voiceRoomViewModel.rooms.collectAsState()
+    val latestAnnouncement by announcementViewModel.latestAnnouncement.collectAsState()
     val userId = authViewModel.currentUser?.id ?: ""
 
     // Initial fetch when entering the screen
@@ -90,15 +98,16 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                 Spacer(modifier = Modifier.width(16.dp))
 
                 // Center: TAG System
+                val selectedIndex = tags.indexOf(selectedTag).coerceAtLeast(0)
                 ScrollableTabRow(
-                    selectedTabIndex = selectedTabIndex,
+                    selectedTabIndex = selectedIndex,
                     modifier = Modifier.weight(1f),
                     containerColor = Color.Transparent,
                     divider = {},
                     edgePadding = 0.dp,
                     indicator = { tabPositions ->
-                        if (selectedTabIndex < tabPositions.size) {
-                            val currentTab = tabPositions[selectedTabIndex]
+                        if (selectedIndex < tabPositions.size) {
+                            val currentTab = tabPositions[selectedIndex]
                             WavyIndicator(
                                 modifier = Modifier.tabIndicatorOffset(currentTab),
                                 color = MangoYellow
@@ -107,7 +116,7 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                     }
                 ) {
                     tags.forEachIndexed { index, tag ->
-                        val isSelected = selectedTabIndex == index
+                        val isSelected = selectedTag == tag
                         val scale by animateFloatAsState(
                             targetValue = if (isSelected) 1.15f else 1f,
                             animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
@@ -123,7 +132,7 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
 
                         Tab(
                             selected = isSelected,
-                            onClick = { selectedTabIndex = index },
+                            onClick = { voiceRoomViewModel.setSelectedTag(tag) },
                             modifier = Modifier
                                 .padding(horizontal = 4.dp)
                                 .height(48.dp),
@@ -144,34 +153,46 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                     }
                 }
 
-                Spacer(modifier = Modifier.width(24.dp))
+                Spacer(modifier = Modifier.width(32.dp))
 
                 // Right: Action Icons
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 4.dp) // Move slightly upward
+                ) {
                     IconButton(
                         onClick = { navController.navigate(Screen.CreateRoom.route) },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.AddBox,
+                            imageVector = Icons.Outlined.Mic,
                             contentDescription = "Create Room",
                             tint = Color.Black,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(12.dp)) // Proper spacing
                     IconButton(
                         onClick = { navController.navigate(Screen.Announcements.route) },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Campaign,
+                            imageVector = Icons.Outlined.Announcement,
                             contentDescription = "Announcements",
                             tint = Color.Black,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
+            }
+
+            // Announcement Banner
+            latestAnnouncement?.let { announcement ->
+                AnnouncementBanner(
+                    title = announcement.title,
+                    onClick = { navController.navigate(Screen.Announcements.route) }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
             // Room Feed
@@ -209,6 +230,7 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                         FunkyRoomCard(
                             hashtag = room.title?.replace(" ", ""),
                             language = room.language,
+                            countryCode = room.country_code,
                             participantCount = room.participantCount,
                             avatars = room.participantAvatars,
                             onJoin = {
@@ -223,6 +245,34 @@ fun HomeScreen(navController: NavController, voiceRoomViewModel: VoiceRoomViewMo
                     item { Spacer(modifier = Modifier.height(100.dp)) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AnnouncementBanner(title: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .clickable(onClick = onClick),
+        color = MangoYellow.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Outlined.Announcement, contentDescription = null, tint = MangoYellow)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color.Black,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

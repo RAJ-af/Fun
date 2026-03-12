@@ -30,6 +30,7 @@ enum class RoomCardLayout {
 fun FunkyRoomCard(
     hashtag: String?,
     language: String?,
+    countryCode: String? = null,
     participantCount: Int,
     avatars: List<String>,
     onJoin: () -> Unit,
@@ -40,8 +41,7 @@ fun FunkyRoomCard(
     val avatarCount = if (layoutType == RoomCardLayout.LARGE) 4 else 3
     val avatarSize = if (layoutType == RoomCardLayout.LARGE) 40.dp else 32.dp
 
-    // Map language code to flag code
-    val flagCode = when(language?.uppercase()) {
+    val flagToUse = countryCode ?: when(language?.uppercase()) {
         "EN" -> "us"
         "CN" -> "cn"
         "JP" -> "jp"
@@ -104,7 +104,7 @@ fun FunkyRoomCard(
                             .background(Color(0xFFF5F5F5))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        CircularFlag(code = flagCode, size = 20.dp)
+                        CircularFlag(code = flagToUse, size = 20.dp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = (language ?: "UN").uppercase(),
