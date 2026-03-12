@@ -12,6 +12,7 @@ data class VoiceRoom(
     val room_type: String? = "public",
     val host_id: String? = null,
     val created_at: String? = null,
+    val participants: Int? = 0,
     val room_participants: List<ParticipantWithProfile>? = null
 )
 

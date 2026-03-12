@@ -121,7 +121,7 @@ class VoiceRoomViewModel(
         tag: String,
         roomType: String,
         hostId: String,
-        onSuccess: () -> Unit
+        onSuccess: (String) -> Unit
     ) {
         viewModelScope.launch {
             val dbTag = when(tag) {
@@ -131,8 +131,10 @@ class VoiceRoomViewModel(
             val room = repository.createRoom(title, language, countryCode, dbTag, roomType, hostId)
             if (room != null) {
                 _currentRoomId.value = room.id
+                fetchParticipants(room.id)
+                // Host joins the channel immediately
                 rtcEngine?.joinChannel(null, room.id, null, 0)
-                onSuccess()
+                onSuccess(room.id)
             }
         }
     }
