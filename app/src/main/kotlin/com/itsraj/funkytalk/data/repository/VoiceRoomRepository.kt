@@ -3,6 +3,8 @@ package com.itsraj.funkytalk.data.repository
 import com.itsraj.funkytalk.data.model.ParticipantWithProfile
 import com.itsraj.funkytalk.data.model.RoomParticipant
 import android.util.Log
+import com.itsraj.funkytalk.data.model.RoomMessage
+import com.itsraj.funkytalk.data.model.RoomMessageWithProfile
 import com.itsraj.funkytalk.data.model.VoiceRoom
 import com.itsraj.funkytalk.data.model.VoiceRoomWithDetails
 import io.github.jan.supabase.SupabaseClient
@@ -218,6 +220,40 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
         val channel = supabase.channel("voice_rooms_changes")
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "voice_rooms"
+        }
+        return flow
+    }
+
+    suspend fun getRoomMessages(roomId: String): List<RoomMessageWithProfile> = withContext(Dispatchers.IO) {
+        try {
+            supabase.postgrest["room_messages"]
+                .select(Columns.raw("*, profiles(*)")) {
+                    filter { eq("room_id", roomId) }
+                    order("created_at", order = Order.ASCENDING)
+                }
+                .decodeList<RoomMessageWithProfile>()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun sendRoomMessage(roomId: String, userId: String, content: String) = withContext(Dispatchers.IO) {
+        try {
+            val message = RoomMessage(
+                room_id = roomId,
+                user_id = userId,
+                content = content
+            )
+            supabase.postgrest["room_messages"].insert(message)
+        } catch (e: Exception) {
+            Log.e("VoiceRoomRepository", "Error sending message: ${e.message}")
+        }
+    }
+
+    fun observeRoomMessages(roomId: String): Flow<PostgresAction> {
+        val channel = supabase.channel("room_messages_$roomId")
+        val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+            table = "room_messages"
         }
         return flow
     }
