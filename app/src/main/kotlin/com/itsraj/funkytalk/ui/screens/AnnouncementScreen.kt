@@ -51,17 +51,49 @@ fun AnnouncementScreen(navController: NavController, viewModel: AnnouncementView
             )
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(announcements) { announcement ->
-                AnnouncementItem(
-                    title = announcement.title,
-                    message = announcement.message,
-                    date = announcement.date
-                )
+        if (announcements.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Campaign,
+                        contentDescription = null,
+                        tint = Color(0xFFFFC107).copy(alpha = 0.4f),
+                        modifier = Modifier.size(100.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "No announcements yet",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Updates from FunkyTalk will appear here.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(announcements) { announcement ->
+                    AnnouncementItem(
+                        title = announcement.title,
+                        message = announcement.message,
+                        date = announcement.date
+                    )
+                }
             }
         }
     }

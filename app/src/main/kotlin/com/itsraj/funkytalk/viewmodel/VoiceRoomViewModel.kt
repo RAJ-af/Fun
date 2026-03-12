@@ -48,12 +48,12 @@ class VoiceRoomViewModel(
         viewModelScope.launch {
             try {
                 val uiTag = _selectedTag.value
-                val dbTag = when(uiTag) {
-                    "Languages" -> "language"
-                    "Discover" -> "Discover"
+                val dbTag = when(uiTag.lowercase()) {
+                    "languages" -> "language"
+                    "discover" -> "discover"
                     else -> uiTag.lowercase()
                 }
-                val fetchedRooms = repository.getActiveVoiceRooms(if (dbTag == "Discover") null else dbTag)
+                val fetchedRooms = repository.getActiveVoiceRooms(if (dbTag == "discover") null else dbTag)
                 _rooms.value = fetchedRooms
                 _filteredRooms.value = fetchedRooms
             } catch (e: Exception) {
