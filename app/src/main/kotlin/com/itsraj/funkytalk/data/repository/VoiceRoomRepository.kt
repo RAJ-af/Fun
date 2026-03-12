@@ -84,8 +84,9 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
         hostId: String
     ): VoiceRoom? = withContext(Dispatchers.IO) {
         try {
+            val roomId = java.util.UUID.randomUUID().toString()
             val room = VoiceRoom(
-                id = java.util.UUID.randomUUID().toString(),
+                id = roomId,
                 title = title,
                 language = language,
                 country_code = countryCode,
@@ -94,11 +95,20 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
                 host_id = hostId,
                 created_at = Instant.now().toString()
             )
+
+            // First insert the room
             val inserted = supabase.postgrest["voice_rooms"].insert(room).decodeSingle<VoiceRoom>()
             Log.d("VoiceRoomRepository", "Room created successfully: ${inserted.id}")
 
-            // Creator must be host
-            joinRoom(inserted.id, hostId, "host")
+            // Then insert the host into participants
+            val participant = RoomParticipant(
+                room_id = inserted.id,
+                user_id = hostId,
+                role = "host",
+                joined_at = Instant.now().toString()
+            )
+            supabase.postgrest["room_participants"].insert(participant)
+            Log.d("VoiceRoomRepository", "Host registered for room: ${inserted.id}")
 
             inserted
         } catch (e: Exception) {

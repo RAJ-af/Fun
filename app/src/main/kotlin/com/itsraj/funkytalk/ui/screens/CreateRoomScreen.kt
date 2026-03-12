@@ -213,9 +213,12 @@ fun CreateRoomScreen(
                             tag = selectedTag,
                             roomType = roomType,
                             hostId = userId
-                        ) {
+                        ) { roomId ->
                             isCreating = false
-                            navController.navigate("voice_room")
+                            // Navigate and clear create screen from backstack
+                            navController.navigate("voice_room") {
+                                popUpTo("create_room") { inclusive = true }
+                            }
                         }
                     }
                 },
