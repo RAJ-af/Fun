@@ -85,19 +85,23 @@ class VoiceRoomRepository(private val supabase: SupabaseClient) {
     ): VoiceRoom? = withContext(Dispatchers.IO) {
         try {
             val roomId = java.util.UUID.randomUUID().toString()
-            val room = VoiceRoom(
-                id = roomId,
-                title = title,
-                language = language,
-                country_code = countryCode,
-                tag = tag,
-                room_type = roomType,
-                host_id = hostId,
-                created_at = Instant.now().toString()
+            // Using a Map for insertion to avoid sending null/default fields that might not be in DB or cause JSON issues
+            val roomData = mapOf(
+                "id" to roomId,
+                "title" to title,
+                "language" to language,
+                "country_code" to countryCode,
+                "tag" to tag,
+                "room_type" to roomType,
+                "host_id" to hostId,
+                "created_at" to Instant.now().toString()
             )
 
             // First insert the room
-            val inserted = supabase.postgrest["voice_rooms"].insert(room).decodeSingle<VoiceRoom>()
+            val response = supabase.postgrest["voice_rooms"].insert(roomData) {
+                select()
+            }
+            val inserted = response.decodeSingle<VoiceRoom>()
             Log.d("VoiceRoomRepository", "Room created successfully: ${inserted.id}")
 
             // Then insert the host into participants
