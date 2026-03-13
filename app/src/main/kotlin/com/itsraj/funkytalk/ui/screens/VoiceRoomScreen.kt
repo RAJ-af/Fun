@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -111,8 +113,9 @@ fun VoiceRoomScreen(
                     .fillMaxSize()
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Top
             ) {
+                Spacer(modifier = Modifier.height(40.dp))
                 Text(
                     text = "SPEAKERS",
                     style = MaterialTheme.typography.labelSmall.copy(
@@ -121,9 +124,14 @@ fun VoiceRoomScreen(
                         letterSpacing = 2.sp
                     )
                 )
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 DynamicSpeakerGrid(speakers = speakers, activeSpeakers = activeSpeakers)
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Listeners Card placed closer to speakers
+                ListenersCard(count = listenerCount, onClick = { showParticipantsSheet = true })
             }
 
             // Bottom UI Stack
@@ -134,11 +142,6 @@ fun VoiceRoomScreen(
                     .padding(bottom = 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Listeners Card
-                ListenersCard(count = listenerCount, onClick = { showParticipantsSheet = true })
-
-                Spacer(modifier = Modifier.height(24.dp))
-
                 // Chat Preview
                 ChatPreview(messages = messages.takeLast(2))
 
@@ -181,35 +184,53 @@ fun VoiceRoomScreen(
 fun DynamicSpeakerGrid(speakers: List<ParticipantWithProfile>, activeSpeakers: Set<Int>) {
     val count = speakers.size
 
-    when {
-        count == 1 -> {
-            SpeakerAvatar(speaker = speakers[0], size = 160.dp, isSpeaking = activeSpeakers.isNotEmpty())
-        }
-        count == 2 -> {
-            Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                speakers.forEach { SpeakerAvatar(speaker = it, size = 120.dp) }
-            }
-        }
-        count == 3 -> {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(32.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().height(280.dp), contentAlignment = Alignment.Center) {
+        when {
+            count == 0 -> {
+                // Should not happen as host is present
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    speakers.take(2).forEach { SpeakerAvatar(speaker = it, size = 110.dp) }
-                }
-                SpeakerAvatar(speaker = speakers[2], size = 110.dp)
-            }
-        }
-        else -> {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(32.dp),
-                verticalArrangement = Arrangement.spacedBy(32.dp),
-                modifier = Modifier.wrapContentHeight()
-            ) {
-                items(speakers) { speaker ->
-                    SpeakerAvatar(speaker = speaker, size = 100.dp)
+                    SpeakerPlaceholder(100.dp)
+                    SpeakerPlaceholder(100.dp)
                 }
             }
+            count == 1 -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SpeakerAvatar(speaker = speakers[0], size = 110.dp, isSpeaking = activeSpeakers.isNotEmpty())
+                    SpeakerPlaceholder(110.dp)
+                }
+            }
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalArrangement = Arrangement.spacedBy(32.dp),
+                    modifier = Modifier.wrapContentHeight()
+                ) {
+                    items(speakers) { speaker ->
+                        SpeakerAvatar(speaker = speaker, size = 100.dp)
+                    }
+                    // Fill remaining slots up to 4 for the "Stage" feel
+                    if (count < 4) {
+                        items(4 - count) {
+                            SpeakerPlaceholder(100.dp)
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun SpeakerPlaceholder(size: androidx.compose.ui.unit.Dp) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .background(Color(0xFFF9F9F9), CircleShape)
+            .border(1.dp, Color.LightGray.copy(alpha = 0.3f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        MyIcon(Icons.Rounded.Add, contentDescription = null, size = (size.value / 3).dp, tint = Color.LightGray)
     }
 }
 
@@ -218,7 +239,7 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
     val ringScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.35f,
+        targetValue = 1.3f,
         animationSpec = infiniteRepeatable(
             animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
@@ -226,7 +247,7 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
         label = "scale"
     )
     val ringAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
+        initialValue = 0.6f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
             animation = tween(1200, easing = FastOutSlowInEasing),
@@ -242,7 +263,7 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
                     modifier = Modifier
                         .size(size)
                         .scale(ringScale)
-                        .border(4.dp, MangoYellow.copy(alpha = ringAlpha), CircleShape)
+                        .border(3.dp, MangoYellow.copy(alpha = ringAlpha), CircleShape)
                 )
             }
 
@@ -251,9 +272,9 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
                     modifier = Modifier
                         .size(size)
                         .clip(CircleShape)
-                        .background(MangoYellow.copy(alpha = 0.05f))
+                        .background(Color(0xFFF0F0F0))
                         .border(
-                            width = if (isSpeaking) 4.dp else 1.dp,
+                            width = if (isSpeaking) 3.dp else 1.dp,
                             color = if (isSpeaking) MangoYellow else Color(0xFFEEEEEE),
                             shape = CircleShape
                         )
@@ -270,8 +291,8 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
                             Text(
                                 text = (speaker.profiles.username ?: "U").take(1).uppercase(),
                                 fontWeight = FontWeight.Black,
-                                fontSize = (size.value / 3).sp,
-                                color = MangoYellow
+                                fontSize = (size.value / 2.5).sp,
+                                color = Color.White
                             )
                         }
                     }
@@ -281,7 +302,7 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
                     Surface(
                         color = MangoYellow,
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.offset(y = 4.dp),
+                        modifier = Modifier.offset(y = 2.dp),
                         shadowElevation = 2.dp
                     ) {
                         Text(
@@ -295,11 +316,11 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = speaker.profiles.username ?: "User",
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             color = Color.Black
         )
     }
@@ -310,23 +331,28 @@ fun ListenersCard(count: Int, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         color = Color.White,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         shadowElevation = 4.dp,
         modifier = Modifier.wrapContentWidth()
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.People, contentDescription = null, size = 18.dp, tint = MangoYellow)
-            Spacer(modifier = Modifier.width(12.dp))
+            MyIcon(Icons.Rounded.Groups, contentDescription = null, size = 18.dp, tint = MangoYellow)
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = "$count Listening",
                 fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
+                fontSize = 13.sp
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.Default.ArrowForward, contentDescription = null, size = 14.dp, tint = Color.Gray)
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Rounded.ArrowForward,
+                contentDescription = null,
+                modifier = Modifier.size(12.dp),
+                tint = Color.LightGray
+            )
         }
     }
 }
@@ -336,24 +362,24 @@ fun ChatPreview(messages: List<RoomMessageWithProfile>) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         messages.forEach { message ->
             Row(
                 modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.04f), RoundedCornerShape(12.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "${message.profiles.username}: ",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = Color.Black.copy(alpha = 0.6f)
                 )
                 Text(
                     text = message.content,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = Color.Black,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -373,24 +399,24 @@ fun FloatingControlsBar(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ControlCircleButton(
-            icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
+            icon = if (isMuted) Icons.Rounded.MicOff else Icons.Rounded.Mic,
             onClick = onMuteToggle,
             active = !isMuted
         )
         ControlCircleButton(
-            icon = Icons.Default.PanTool,
+            icon = Icons.Rounded.PanTool,
             onClick = onRaiseHand
         )
         ControlCircleButton(
-            icon = Icons.AutoMirrored.Filled.Chat,
+            icon = Icons.Rounded.Chat,
             onClick = onChatToggle
         )
         ControlCircleButton(
-            icon = Icons.Default.CallEnd,
+            icon = Icons.Rounded.CallEnd,
             onClick = onLeave,
             containerColor = Color.Red.copy(alpha = 0.1f),
             iconColor = Color.Red
@@ -408,19 +434,19 @@ fun ControlCircleButton(
 ) {
     Box(
         modifier = Modifier
-            .size(60.dp)
-            .shadow(4.dp, CircleShape)
+            .size(56.dp)
+            .shadow(6.dp, CircleShape)
             .clip(CircleShape)
             .background(if (active) MangoYellow else containerColor)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = null, tint = if (active) Color.Black else iconColor)
+        MyIcon(icon, contentDescription = null, size = 26.dp, tint = if (active) Color.Black else iconColor)
     }
 }
 
 @Composable
-fun Icon(imageVector: ImageVector, contentDescription: String?, size: androidx.compose.ui.unit.Dp, tint: Color) {
+fun MyIcon(imageVector: ImageVector, contentDescription: String?, size: androidx.compose.ui.unit.Dp, tint: Color) {
     androidx.compose.material3.Icon(
         imageVector = imageVector,
         contentDescription = contentDescription,
@@ -474,16 +500,22 @@ fun SectionHeader(title: String) {
 @Composable
 fun ParticipantItem(participant: ParticipantWithProfile) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        AsyncImage(
-            model = participant.profiles.avatar_url,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
-            contentScale = ContentScale.Crop
-        )
-        Spacer(modifier = Modifier.width(16.dp))
+        if (participant.profiles.avatar_url != null) {
+            AsyncImage(
+                model = participant.profiles.avatar_url,
+                contentDescription = null,
+                modifier = Modifier.size(44.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(modifier = Modifier.size(44.dp).background(Color(0xFFE0E0E0), CircleShape), contentAlignment = Alignment.Center) {
+                Text(text = (participant.profiles.username ?: "U").take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
         Column {
-            Text(text = participant.profiles.username ?: "User", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(text = participant.role.replaceFirstChar { it.uppercase() }, fontSize = 13.sp, color = Color.Gray)
+            Text(text = participant.profiles.username ?: "User", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(text = participant.role.replaceFirstChar { it.uppercase() }, fontSize = 12.sp, color = Color.Gray)
         }
     }
 }
@@ -520,12 +552,18 @@ fun ChatBottomSheet(
                         horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
                     ) {
                         if (!isMe) {
-                            AsyncImage(
-                                model = message.profiles.avatar_url,
-                                contentDescription = null,
-                                modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
-                                contentScale = ContentScale.Crop
-                            )
+                            if (message.profiles.avatar_url != null) {
+                                AsyncImage(
+                                    model = message.profiles.avatar_url,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(34.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(modifier = Modifier.size(34.dp).background(Color(0xFFE0E0E0), CircleShape), contentAlignment = Alignment.Center) {
+                                    Text(text = (message.profiles.username ?: "U").take(1).uppercase(), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
                             Spacer(modifier = Modifier.width(10.dp))
                         }
 
