@@ -18,17 +18,21 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -89,57 +93,73 @@ fun VoiceRoomScreen(
                     }
                 },
                 actions = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.People, contentDescription = null, modifier = Modifier.size(20.dp), tint = Color.Black)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "${participants.size}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        IconButton(onClick = { /* Menu */ }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                        }
+                    IconButton(onClick = { /* Menu */ }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
-        bottomBar = {
-            VoiceControlsBar(
-                isMuted = isMuted,
-                onMuteToggle = { viewModel.toggleMute() },
-                onRaiseHand = { viewModel.raiseHand(userId) },
-                onChatToggle = { showChatSheet = true },
-                onLeave = {
-                    viewModel.leaveRoom(userId) {
-                        navController.popBackStack()
-                    }
-                }
-            )
-        },
         containerColor = Color.White
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
         ) {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Speakers",
-                        style = MaterialTheme.typography.labelMedium.copy(color = Color.Gray, fontWeight = FontWeight.Bold)
+            // Stage (Centered Speakers)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                Spacer(modifier = Modifier.height(40.dp))
+                Text(
+                    text = "SPEAKERS",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.Gray.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 2.sp
                     )
-                    Spacer(modifier = Modifier.height(32.dp))
-                    SpeakerGrid(speakers = speakers, activeSpeakers = activeSpeakers)
-                }
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+
+                DynamicSpeakerGrid(speakers = speakers, activeSpeakers = activeSpeakers)
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Listeners Card placed closer to speakers
+                ListenersCard(count = listenerCount, onClick = { showParticipantsSheet = true })
             }
 
-            ParticipantsRow(
-                count = listenerCount,
-                onClick = { showParticipantsSheet = true }
-            )
+            // Bottom UI Stack
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Chat Preview
+                ChatPreview(messages = messages.takeLast(2))
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Floating Controls
+                FloatingControlsBar(
+                    isMuted = isMuted,
+                    onMuteToggle = { viewModel.toggleMute() },
+                    onRaiseHand = { viewModel.raiseHand(userId) },
+                    onChatToggle = { showChatSheet = true },
+                    onLeave = {
+                        viewModel.leaveRoom(userId) {
+                            navController.popBackStack()
+                        }
+                    }
+                )
+            }
         }
 
         if (showParticipantsSheet) {
@@ -161,45 +181,79 @@ fun VoiceRoomScreen(
 }
 
 @Composable
-fun SpeakerGrid(speakers: List<ParticipantWithProfile>, activeSpeakers: Set<Int>) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        horizontalArrangement = Arrangement.spacedBy(32.dp),
-        verticalArrangement = Arrangement.spacedBy(40.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        items(speakers) { speaker ->
-            // For MVP, we don't have a reliable Int UID -> String UUID mapping yet,
-            // so we might mock activity or use a hash if UIDs are stable.
-            // Using a simple check for now.
-            val isSpeaking = activeSpeakers.isNotEmpty() && speakers.indexOf(speaker) == 0
-            SpeakerAvatar(speaker = speaker, isSpeaking = isSpeaking)
+fun DynamicSpeakerGrid(speakers: List<ParticipantWithProfile>, activeSpeakers: Set<Int>) {
+    val count = speakers.size
+
+    Box(modifier = Modifier.fillMaxWidth().height(280.dp), contentAlignment = Alignment.Center) {
+        when {
+            count == 0 -> {
+                // Should not happen as host is present
+                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+                    SpeakerPlaceholder(100.dp)
+                    SpeakerPlaceholder(100.dp)
+                }
+            }
+            count == 1 -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SpeakerAvatar(speaker = speakers[0], size = 110.dp, isSpeaking = activeSpeakers.isNotEmpty())
+                    SpeakerPlaceholder(110.dp)
+                }
+            }
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalArrangement = Arrangement.spacedBy(32.dp),
+                    modifier = Modifier.wrapContentHeight()
+                ) {
+                    items(speakers) { speaker ->
+                        SpeakerAvatar(speaker = speaker, size = 100.dp)
+                    }
+                    // Fill remaining slots up to 4 for the "Stage" feel
+                    if (count < 4) {
+                        items(4 - count) {
+                            SpeakerPlaceholder(100.dp)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun SpeakerAvatar(speaker: ParticipantWithProfile, isSpeaking: Boolean) {
-    val infiniteTransition = rememberInfiniteTransition(label = "speaking")
+fun SpeakerPlaceholder(size: androidx.compose.ui.unit.Dp) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .background(Color(0xFFF9F9F9), CircleShape)
+            .border(1.dp, Color.LightGray.copy(alpha = 0.3f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        MyIcon(Icons.Rounded.Add, contentDescription = null, size = (size.value / 3).dp, tint = Color.LightGray)
+    }
+}
 
+@Composable
+fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.unit.Dp = 100.dp, isSpeaking: Boolean = false) {
+    val infiniteTransition = rememberInfiniteTransition(label = "glow")
     val ringScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.4f,
+        targetValue = 1.3f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearOutSlowInEasing),
+            animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "ringScale"
+        label = "scale"
     )
-
     val ringAlpha by infiniteTransition.animateFloat(
         initialValue = 0.6f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearOutSlowInEasing),
+            animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "ringAlpha"
+        label = "alpha"
     )
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -207,24 +261,23 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, isSpeaking: Boolean) {
             if (isSpeaking) {
                 Box(
                     modifier = Modifier
-                        .size(100.dp)
+                        .size(size)
                         .scale(ringScale)
-                        .border(2.dp, MangoYellow.copy(alpha = ringAlpha), CircleShape)
+                        .border(3.dp, MangoYellow.copy(alpha = ringAlpha), CircleShape)
                 )
             }
 
             Box(contentAlignment = Alignment.BottomEnd) {
                 Box(
                     modifier = Modifier
-                        .size(100.dp)
+                        .size(size)
                         .clip(CircleShape)
-                        .background(MangoYellow.copy(alpha = 0.1f))
+                        .background(Color(0xFFF0F0F0))
                         .border(
                             width = if (isSpeaking) 3.dp else 1.dp,
-                            color = if (isSpeaking) MangoYellow else Color.LightGray.copy(alpha = 0.5f),
+                            color = if (isSpeaking) MangoYellow else Color(0xFFEEEEEE),
                             shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
+                        )
                 ) {
                     if (speaker.profiles.avatar_url != null) {
                         AsyncImage(
@@ -234,51 +287,102 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, isSpeaking: Boolean) {
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        Text(
-                            text = (speaker.profiles.username ?: "U").take(1).uppercase(),
-                            fontWeight = FontWeight.Black,
-                            fontSize = 32.sp,
-                            color = MangoYellow
-                        )
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = (speaker.profiles.username ?: "U").take(1).uppercase(),
+                                fontWeight = FontWeight.Black,
+                                fontSize = (size.value / 2.5).sp,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
 
                 if (speaker.role == "host") {
                     Surface(
                         color = MangoYellow,
-                        shape = RoundedCornerShape(6.dp),
-                        modifier = Modifier.offset(y = 4.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.offset(y = 2.dp),
                         shadowElevation = 2.dp
                     ) {
                         Text(
                             text = "HOST",
-                            color = Color.Black,
-                            fontSize = 9.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                            fontSize = 8.sp,
                             fontWeight = FontWeight.Black,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            color = Color.Black
                         )
                     }
                 }
             }
         }
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = speaker.profiles.username ?: "User",
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            color = Color.Black
+        )
+    }
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
+@Composable
+fun ListenersCard(count: Int, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = Color.White,
+        shape = RoundedCornerShape(16.dp),
+        shadowElevation = 4.dp,
+        modifier = Modifier.wrapContentWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MyIcon(Icons.Rounded.Groups, contentDescription = null, size = 18.dp, tint = MangoYellow)
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = speaker.profiles.username ?: "User",
-                fontSize = 14.sp,
+                text = "$count Listening",
                 fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                textAlign = TextAlign.Center
+                fontSize = 13.sp
             )
-            if (isSpeaking) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Default.Mic,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MangoYellow
+            Spacer(modifier = Modifier.width(8.dp))
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Rounded.ArrowForward,
+                contentDescription = null,
+                modifier = Modifier.size(12.dp),
+                tint = Color.LightGray
+            )
+        }
+    }
+}
+
+@Composable
+fun ChatPreview(messages: List<RoomMessageWithProfile>) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        messages.forEach { message ->
+            Row(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.04f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${message.profiles.username}: ",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = Color.Black.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = message.content,
+                    fontSize = 11.sp,
+                    color = Color.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -286,25 +390,69 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, isSpeaking: Boolean) {
 }
 
 @Composable
-fun ParticipantsRow(count: Int, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        color = Color(0xFFF9F9F9),
-        shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth()
+fun FloatingControlsBar(
+    isMuted: Boolean,
+    onMuteToggle: () -> Unit,
+    onRaiseHand: () -> Unit,
+    onChatToggle: () -> Unit,
+    onLeave: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Listeners ($count)",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-            )
-            Icon(Icons.Default.ArrowForward, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
-        }
+        ControlCircleButton(
+            icon = if (isMuted) Icons.Rounded.MicOff else Icons.Rounded.Mic,
+            onClick = onMuteToggle,
+            active = !isMuted
+        )
+        ControlCircleButton(
+            icon = Icons.Rounded.PanTool,
+            onClick = onRaiseHand
+        )
+        ControlCircleButton(
+            icon = Icons.Rounded.Chat,
+            onClick = onChatToggle
+        )
+        ControlCircleButton(
+            icon = Icons.Rounded.CallEnd,
+            onClick = onLeave,
+            containerColor = Color.Red.copy(alpha = 0.1f),
+            iconColor = Color.Red
+        )
     }
+}
+
+@Composable
+fun ControlCircleButton(
+    icon: ImageVector,
+    onClick: () -> Unit,
+    active: Boolean = false,
+    containerColor: Color = Color(0xFFF7F7F7),
+    iconColor: Color = Color.Black
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .shadow(6.dp, CircleShape)
+            .clip(CircleShape)
+            .background(if (active) MangoYellow else containerColor)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        MyIcon(icon, contentDescription = null, size = 26.dp, tint = if (active) Color.Black else iconColor)
+    }
+}
+
+@Composable
+fun MyIcon(imageVector: ImageVector, contentDescription: String?, size: androidx.compose.ui.unit.Dp, tint: Color) {
+    androidx.compose.material3.Icon(
+        imageVector = imageVector,
+        contentDescription = contentDescription,
+        modifier = Modifier.size(size),
+        tint = tint
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -352,96 +500,23 @@ fun SectionHeader(title: String) {
 @Composable
 fun ParticipantItem(participant: ParticipantWithProfile) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        AsyncImage(
-            model = participant.profiles.avatar_url,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
-            contentScale = ContentScale.Crop
-        )
-        Spacer(modifier = Modifier.width(16.dp))
+        if (participant.profiles.avatar_url != null) {
+            AsyncImage(
+                model = participant.profiles.avatar_url,
+                contentDescription = null,
+                modifier = Modifier.size(44.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(modifier = Modifier.size(44.dp).background(Color(0xFFE0E0E0), CircleShape), contentAlignment = Alignment.Center) {
+                Text(text = (participant.profiles.username ?: "U").take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
         Column {
-            Text(text = participant.profiles.username ?: "User", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(text = participant.role.replaceFirstChar { it.uppercase() }, fontSize = 13.sp, color = Color.Gray)
+            Text(text = participant.profiles.username ?: "User", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(text = participant.role.replaceFirstChar { it.uppercase() }, fontSize = 12.sp, color = Color.Gray)
         }
-    }
-}
-
-@Composable
-fun VoiceControlsBar(
-    isMuted: Boolean,
-    onMuteToggle: () -> Unit,
-    onRaiseHand: () -> Unit,
-    onChatToggle: () -> Unit,
-    onLeave: () -> Unit
-) {
-    Surface(
-        color = Color.White,
-        shadowElevation = 24.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 24.dp, horizontal = 32.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ControlCircleButton(
-                icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
-                onClick = onMuteToggle,
-                active = !isMuted,
-                animatePulse = !isMuted
-            )
-            ControlCircleButton(
-                icon = Icons.Default.PanTool,
-                onClick = onRaiseHand
-            )
-            ControlCircleButton(
-                icon = Icons.AutoMirrored.Filled.Chat,
-                onClick = onChatToggle
-            )
-            ControlCircleButton(
-                icon = Icons.Default.CallEnd,
-                onClick = onLeave,
-                containerColor = Color.Red.copy(alpha = 0.1f),
-                iconColor = Color.Red
-            )
-        }
-    }
-}
-
-@Composable
-fun ControlCircleButton(
-    icon: ImageVector,
-    onClick: () -> Unit,
-    active: Boolean = false,
-    animatePulse: Boolean = false,
-    containerColor: Color = Color(0xFFF7F7F7),
-    iconColor: Color = Color.Black
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (animatePulse) 1.05f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-
-    Box(
-        modifier = Modifier
-            .size(60.dp)
-            .scale(if (animatePulse) scale else 1f)
-            .clip(CircleShape)
-            .background(if (active) MangoYellow else containerColor)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = if (active) Color.Black else iconColor,
-            modifier = Modifier.size(28.dp)
-        )
     }
 }
 
@@ -477,12 +552,18 @@ fun ChatBottomSheet(
                         horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
                     ) {
                         if (!isMe) {
-                            AsyncImage(
-                                model = message.profiles.avatar_url,
-                                contentDescription = null,
-                                modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
-                                contentScale = ContentScale.Crop
-                            )
+                            if (message.profiles.avatar_url != null) {
+                                AsyncImage(
+                                    model = message.profiles.avatar_url,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(34.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(modifier = Modifier.size(34.dp).background(Color(0xFFE0E0E0), CircleShape), contentAlignment = Alignment.Center) {
+                                    Text(text = (message.profiles.username ?: "U").take(1).uppercase(), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
                             Spacer(modifier = Modifier.width(10.dp))
                         }
 
