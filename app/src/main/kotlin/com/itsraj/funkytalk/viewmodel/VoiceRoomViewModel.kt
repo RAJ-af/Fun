@@ -39,6 +39,9 @@ class VoiceRoomViewModel(
     private val _messages = MutableStateFlow<List<RoomMessageWithProfile>>(emptyList())
     val messages: StateFlow<List<RoomMessageWithProfile>> = _messages
 
+    private val _unreadMessageCount = MutableStateFlow(0)
+    val unreadMessageCount: StateFlow<Int> = _unreadMessageCount
+
     private val _isMuted = MutableStateFlow(false)
     val isMuted: StateFlow<Boolean> = _isMuted
 
@@ -189,8 +192,13 @@ class VoiceRoomViewModel(
         viewModelScope.launch {
             repository.observeRoomMessages(roomId).collect {
                 fetchMessages(roomId)
+                _unreadMessageCount.value += 1
             }
         }
+    }
+
+    fun resetUnreadCount() {
+        _unreadMessageCount.value = 0
     }
 
     fun sendMessage(userId: String, content: String) {
