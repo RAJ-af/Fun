@@ -543,6 +543,12 @@ fun ParticipantItem(participant: ParticipantWithProfile) {
             AsyncImage(
                 model = participant.profiles.avatar_url,
                 contentDescription = null,
+                modifier = Modifier.size(44.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(modifier = Modifier.size(44.dp).background(Color(0xFFF5F5F5), CircleShape), contentAlignment = Alignment.Center) {
+                Text(text = (participant.profiles.username ?: "U").take(1).uppercase(), color = Color.Black.copy(alpha = 0.3f), fontWeight = FontWeight.Bold)
                 modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFEEEEEE)),
                 contentScale = ContentScale.Crop
             )
