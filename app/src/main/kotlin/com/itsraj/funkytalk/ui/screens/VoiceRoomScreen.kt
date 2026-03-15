@@ -3,6 +3,7 @@ package com.itsraj.funkytalk.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -99,71 +100,79 @@ fun VoiceRoomScreen(
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = Color.White
+        containerColor = Color.Transparent
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
         ) {
-            // Stage (Centered Speakers)
-            Column(
+            // Live Animated Background
+            AnimatedRoomBackground()
+
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .padding(padding)
             ) {
-                Text(
-                    text = "SPEAKERS",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.Black.copy(alpha = 0.4f),
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp
+                // Stage (Centered Speakers)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "SPEAKERS",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.Black.copy(alpha = 0.4f),
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 2.sp
+                        )
                     )
-                )
-                Spacer(modifier = Modifier.height(48.dp))
+                    Spacer(modifier = Modifier.height(48.dp))
 
-                DynamicSpeakerGrid(speakers = speakers, activeSpeakers = activeSpeakers)
+                    DynamicSpeakerGrid(speakers = speakers, activeSpeakers = activeSpeakers)
 
-                Spacer(modifier = Modifier.height(64.dp))
+                    Spacer(modifier = Modifier.height(64.dp))
 
-                // Listeners Card
-                ListenersCard(count = listenerCount, onClick = { showParticipantsSheet = true })
-            }
+                    // Listeners Card
+                    ListenersCard(count = listenerCount, onClick = { showParticipantsSheet = true })
+                }
 
-            // Bottom UI Stack
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Chat Preview (Elegant overlay)
-                ChatPreview(messages = messages.takeLast(2))
+                // Bottom UI Stack
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Chat Preview (Elegant overlay)
+                    ChatPreview(messages = messages.takeLast(2))
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                // Minimal Floating Controls
-                FloatingControlsBar(
-                    isMuted = isMuted,
-                    unreadCount = unreadCount,
-                    onMuteToggle = { viewModel.toggleMute() },
-                    onRaiseHand = { viewModel.raiseHand(userId) },
-                    onChatToggle = {
-                        showChatSheet = true
-                        viewModel.resetUnreadCount()
-                    },
-                    onLeave = {
-                        viewModel.leaveRoom(userId) {
-                            navController.popBackStack()
+                    // Minimal Floating Controls
+                    FloatingControlsBar(
+                        isMuted = isMuted,
+                        unreadCount = unreadCount,
+                        onMuteToggle = { viewModel.toggleMute() },
+                        onRaiseHand = { viewModel.raiseHand(userId) },
+                        onChatToggle = {
+                            showChatSheet = true
+                            viewModel.resetUnreadCount()
+                        },
+                        onLeave = {
+                            viewModel.leaveRoom(userId) {
+                                navController.popBackStack()
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
 
@@ -186,13 +195,43 @@ fun VoiceRoomScreen(
 }
 
 @Composable
+fun AnimatedRoomBackground() {
+    val infiniteTransition = rememberInfiniteTransition(label = "bg")
+    val animValue by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(10000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bgAnim"
+    )
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val color1 = Color(0xFFFFFFFF)
+        val color2 = Color(0xFFFFFBF0) // Very soft cream
+        val color3 = Color(0xFFFFF7E0) // Soft yellow
+
+        val brush = Brush.linearGradient(
+            colors = listOf(color1, color2, color3, color2, color1),
+            start = androidx.compose.ui.geometry.Offset(0f, size.height * animValue),
+            end = androidx.compose.ui.geometry.Offset(size.width, size.height * (1 - animValue))
+        )
+        drawRect(brush = brush)
+    }
+}
+
+@Composable
 fun DynamicSpeakerGrid(speakers: List<ParticipantWithProfile>, activeSpeakers: Set<Int>) {
     val count = speakers.size
 
     Box(modifier = Modifier.fillMaxWidth().wrapContentHeight(), contentAlignment = Alignment.Center) {
         when {
             count == 1 -> {
-                SpeakerAvatar(speaker = speakers[0], size = 140.dp, isSpeaking = activeSpeakers.isNotEmpty())
+                Row(horizontalArrangement = Arrangement.spacedBy(40.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SpeakerAvatar(speaker = speakers[0], size = 140.dp, isSpeaking = activeSpeakers.isNotEmpty())
+                    InviteSpeakerPlaceholder(140.dp)
+                }
             }
             count == 2 -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
@@ -216,11 +255,28 @@ fun DynamicSpeakerGrid(speakers: List<ParticipantWithProfile>, activeSpeakers: S
 }
 
 @Composable
+fun InviteSpeakerPlaceholder(size: androidx.compose.ui.unit.Dp) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .background(Color.Black.copy(alpha = 0.02f), CircleShape)
+                .border(BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f)), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            MyIcon(Icons.Rounded.Add, contentDescription = null, size = (size.value / 3).dp, tint = Color.Black.copy(alpha = 0.1f))
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Invite speaker", fontSize = 11.sp, color = Color.Black.copy(alpha = 0.2f), fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
 fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.unit.Dp = 100.dp, isSpeaking: Boolean = false) {
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
     val ringScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.2f,
+        targetValue = 1.35f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
@@ -228,7 +284,7 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
         label = "scale"
     )
     val ringAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
+        initialValue = 0.5f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
@@ -239,12 +295,24 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(contentAlignment = Alignment.Center) {
+            // Soft Radial Glow behind avatar
+            Box(
+                modifier = Modifier
+                    .size(size + 24.dp)
+                    .background(
+                        Brush.radialGradient(
+                            listOf(MangoYellow.copy(alpha = 0.15f), Color.Transparent)
+                        ),
+                        CircleShape
+                    )
+            )
+
             if (isSpeaking) {
                 Box(
                     modifier = Modifier
                         .size(size)
                         .scale(ringScale)
-                        .border(1.5.dp, MangoYellow.copy(alpha = ringAlpha), CircleShape)
+                        .border(2.dp, MangoYellow.copy(alpha = ringAlpha), CircleShape)
                 )
             }
 
@@ -253,7 +321,8 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
                     modifier = Modifier.size(size),
                     shape = CircleShape,
                     color = Color(0xFFF9F9F9),
-                    border = BorderStroke(if (isSpeaking) 3.dp else 0.dp, MangoYellow)
+                    border = BorderStroke(if (isSpeaking) 3.dp else 0.dp, MangoYellow),
+                    shadowElevation = 2.dp
                 ) {
                     if (speaker.profiles.avatar_url != null) {
                         AsyncImage(
@@ -278,11 +347,12 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
                     Surface(
                         color = MangoYellow,
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.offset(y = 2.dp)
+                        modifier = Modifier.offset(x = 2.dp, y = 2.dp),
+                        shadowElevation = 2.dp
                     ) {
                         Text(
                             text = "HOST",
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Black,
                             color = Color.Black
@@ -305,24 +375,32 @@ fun SpeakerAvatar(speaker: ParticipantWithProfile, size: androidx.compose.ui.uni
 fun ListenersCard(count: Int, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        color = Color(0xFFFBFBFB),
+        color = Color.White.copy(alpha = 0.8f),
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f)),
+        shadowElevation = 6.dp,
         modifier = Modifier.wrapContentWidth()
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(20.dp), tint = Color.Black)
+            Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(20.dp), tint = MangoYellow)
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "$count Listening",
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                color = Color.Black
-            )
-            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "👥 $count Listening",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "Tap to view participants",
+                    fontSize = 10.sp,
+                    color = Color.Black.copy(alpha = 0.4f),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Spacer(modifier = Modifier.width(24.dp))
             Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.LightGray)
         }
     }
@@ -396,8 +474,8 @@ fun FloatingControlsBar(
             icon = Icons.Rounded.CallEnd,
             onClick = onLeave,
             containerColor = Color.White,
-            iconColor = Color.Red,
-            activeColor = Color.Red,
+            iconColor = Color.Red.copy(alpha = 0.8f),
+            activeColor = Color.Red.copy(alpha = 0.1f),
             isLeave = true
         )
     }
@@ -420,11 +498,11 @@ fun ControlCircleButton(
             shape = CircleShape,
             color = if (active) activeColor else containerColor,
             border = BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f)),
-            shadowElevation = 2.dp,
+            shadowElevation = 4.dp,
             onClick = onClick
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = if (active && !isLeave) Color.Black else iconColor)
+                Icon(icon, contentDescription = null, modifier = Modifier.size(26.dp), tint = if (active && !isLeave) Color.Black else iconColor)
             }
         }
 
@@ -432,7 +510,7 @@ fun ControlCircleButton(
             Surface(
                 color = Color.Red,
                 shape = CircleShape,
-                modifier = Modifier.size(18.dp).offset(x = 2.dp, y = (-2).dp),
+                modifier = Modifier.size(20.dp).offset(x = 2.dp, y = (-2).dp),
                 border = BorderStroke(1.5.dp, Color.White)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -441,6 +519,16 @@ fun ControlCircleButton(
             }
         }
     }
+}
+
+@Composable
+fun MyIcon(imageVector: ImageVector, contentDescription: String?, size: androidx.compose.ui.unit.Dp, tint: Color) {
+    androidx.compose.material3.Icon(
+        imageVector = imageVector,
+        contentDescription = contentDescription,
+        modifier = Modifier.size(size),
+        tint = tint
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
