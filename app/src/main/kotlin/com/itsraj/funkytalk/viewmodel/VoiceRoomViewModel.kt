@@ -159,7 +159,7 @@ class VoiceRoomViewModel(
                 _currentRoomId.value = room.id
                 fetchParticipants(room.id)
                 // Host joins the channel immediately
-                rtcEngine?.joinChannel(null, room.id, null, 0)
+                rtcEngine?.joinChannel(null, room.id, null, hostId.hashCode())
                 onSuccess(room.id)
                 _navigationEvents.emit(VoiceRoomNavigationEvent.NavigateToRoom(room.id, "host"))
             }
@@ -178,7 +178,7 @@ class VoiceRoomViewModel(
             fetchParticipants(roomId)
             fetchMessages(roomId)
             observeRoomMessages(roomId)
-            rtcEngine?.joinChannel(null, roomId, null, 0)
+            rtcEngine?.joinChannel(null, roomId, null, userId.hashCode())
         }
     }
 
