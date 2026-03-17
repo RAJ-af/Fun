@@ -160,14 +160,14 @@ fun VoiceRoomScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 DynamicSpeakerStage(
                     speakers = speakers,
                     activeSpeakers = activeSpeakers
                 )
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Listener Indicator
                 Surface(
@@ -207,34 +207,8 @@ fun VoiceRoomScreen(
                     .padding(bottom = 40.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                // Talking Indicator
                 val currentSpeakerUid = activeSpeakers.firstOrNull()
                 val currentSpeaker = participants.find { it.user_id.hashCode() == currentSpeakerUid }
-
-                AnimatedVisibility(
-                    visible = currentSpeaker != null,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(MangoYellow, CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "${currentSpeaker?.profiles?.username} is talking...",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Medium
-                            )
-                        )
-                    }
-                }
 
                 // Chat Preview overlay
                 ChatPreviewOverlay(messages = messages.takeLast(2))
@@ -242,23 +216,23 @@ fun VoiceRoomScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Collapsible Controls
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CollapsibleControlBar(
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+                    ModernControlBar(
                         expanded = controlsExpanded,
                         onToggle = { controlsExpanded = !controlsExpanded },
                         isMuted = isMuted,
                         unreadCount = unreadCount,
                         onMuteToggle = { viewModel.toggleMute() },
                         onRaiseHand = { viewModel.raiseHand(userId) },
-                    onChatToggle = {
-                        // Navigate to global chats screen as a shortcut
-                        navController.navigate(com.itsraj.funkytalk.ui.navigation.Screen.Chats.route)
+                        onChatToggle = {
+                            navController.navigate(com.itsraj.funkytalk.ui.navigation.Screen.Chats.route)
                         },
                         onLeave = {
                             viewModel.leaveRoom(userId) {
                                 navController.popBackStack()
                             }
-                        }
+                        },
+                        currentSpeaker = currentSpeaker?.profiles?.username ?: ""
                     )
                 }
             }
@@ -283,10 +257,10 @@ fun DynamicSpeakerStage(
         columns = GridCells.Fixed(3),
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp), // Approximate height for 2 rows
-        contentPadding = PaddingValues(8.dp),
+            .height(300.dp), // Adjusted height to accommodate badges
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         userScrollEnabled = false
     ) {
         items(6) { index ->
@@ -306,78 +280,63 @@ fun SpeakerAvatarItem(
     size: androidx.compose.ui.unit.Dp,
     isSpeaking: Boolean = false
 ) {
-    val infiniteTransition = rememberInfiniteTransition()
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(contentAlignment = Alignment.Center) {
-            // Pulse Effect
-            if (isSpeaking) {
-                Box(
-                    modifier = Modifier
-                        .size(size + 12.dp)
-                        .scale(pulseScale)
-                        .background(MangoYellow.copy(alpha = 0.2f), CircleShape)
+            // Host Ring / Speaking Indicator (Static Ring as per new requirement)
+            if (speaker?.role == "host" || isSpeaking) {
+                AsyncImage(
+                    model = "https://itsraj555-resurses.hf.space/icons/host-ring-fixed.png",
+                    contentDescription = null,
+                    modifier = Modifier.size(size + 12.dp)
                 )
             }
 
-            Box(contentAlignment = Alignment.BottomCenter) {
-                Surface(
-                    modifier = Modifier
-                        .size(size)
-                        .border(
-                            width = if (isSpeaking || speaker?.role == "host") 2.dp else 0.dp,
-                            color = if (isSpeaking || speaker?.role == "host") MangoYellow else Color.Transparent,
-                            shape = CircleShape
-                        ),
-                    shape = CircleShape,
-                    color = Color(0xFFF5F5F5)
-                ) {
-                    if (speaker?.profiles?.avatar_url != null) {
-                        AsyncImage(
-                            model = speaker.profiles.avatar_url,
+            Surface(
+                modifier = Modifier.size(size),
+                shape = CircleShape,
+                color = Color(0xFFF5F5F5)
+            ) {
+                if (speaker?.profiles?.avatar_url != null) {
+                    AsyncImage(
+                        model = speaker.profiles.avatar_url,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Rounded.Person,
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Rounded.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(size / 2.5f),
-                                tint = Color.LightGray
-                            )
-                        }
-                    }
-                }
-
-                if (speaker?.role == "host") {
-                    Surface(
-                        color = MangoYellow,
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier
-                            .offset(y = 8.dp)
-                    ) {
-                        Text(
-                            text = "Host",
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            modifier = Modifier.size(size / 2.5f),
+                            tint = Color.LightGray
                         )
                     }
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (speaker?.role == "host") {
+            Surface(
+                color = MangoYellow,
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.padding(bottom = 4.dp)
+            ) {
+                Text(
+                    text = "Host",
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+        } else {
+            // Empty space to maintain text alignment if not host
+            Spacer(modifier = Modifier.height(14.dp))
+        }
+
         Text(
             text = speaker?.profiles?.username ?: "Empty",
             style = MaterialTheme.typography.labelSmall.copy(
@@ -442,21 +401,20 @@ fun ChatPreviewOverlay(messages: List<RoomMessageWithProfile>) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = message.profiles.username ?: "User",
-                                fontWeight = FontWeight.Medium,
+                                text = "${message.profiles.username ?: "User"}: ",
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
                                 color = Color.Gray
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = message.content,
+                                fontSize = 11.sp,
+                                color = Color.Black,
+                                fontWeight = FontWeight.Light,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
-                        Text(
-                            text = message.content,
-                            fontSize = 12.sp,
-                            color = Color.Black,
-                            fontWeight = FontWeight.Normal,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     }
                 }
             }
@@ -465,7 +423,7 @@ fun ChatPreviewOverlay(messages: List<RoomMessageWithProfile>) {
 }
 
 @Composable
-fun CollapsibleControlBar(
+fun ModernControlBar(
     expanded: Boolean,
     onToggle: () -> Unit,
     isMuted: Boolean,
@@ -473,69 +431,100 @@ fun CollapsibleControlBar(
     onMuteToggle: () -> Unit,
     onRaiseHand: () -> Unit,
     onChatToggle: () -> Unit,
-    onLeave: () -> Unit
+    onLeave: () -> Unit,
+    currentSpeaker: String
 ) {
     val transition = updateTransition(targetState = expanded, label = "ControlsTransition")
 
     val width by transition.animateDp(label = "Width") { state ->
-        if (state) 280.dp else 56.dp
+        if (state) 280.dp else 160.dp
     }
 
     Surface(
         modifier = Modifier
             .width(width)
             .height(56.dp)
+            .shadow(12.dp, RoundedCornerShape(28.dp))
             .draggable(
                 orientation = Orientation.Horizontal,
                 state = rememberDraggableState { delta ->
                     if (delta < -20 && expanded) onToggle()
                 }
-            )
-            .clickable(enabled = !expanded) { onToggle() },
+            ),
         shape = RoundedCornerShape(28.dp),
-        color = Color.White,
-        shadowElevation = 8.dp,
-        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
+        color = Color.White
     ) {
         if (!expanded) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(
-                    Icons.Rounded.ChevronRight,
-                    contentDescription = "Expand",
-                    tint = Color.Gray
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { onToggle() }
+                    .padding(start = 20.dp, end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = if (currentSpeaker.isNotEmpty()) "Talking..." else "No one is talking",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
+
+                Surface(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clickable { onToggle() },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MangoYellow
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Rounded.ChevronLeft,
+                            contentDescription = "Expand",
+                            tint = Color.Black,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         } else {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ControlIconSmall(
                     icon = if (isMuted) Icons.Rounded.MicOff else Icons.Rounded.Mic,
                     onClick = onMuteToggle,
-                    active = !isMuted,
+                    active = true, // Mic is always yellow as per "Mic -> yellow filled circle"
                     activeColor = MangoYellow,
-                    inactiveColor = Color(0xFFF5F5F5)
+                    iconColor = if (isMuted) Color.Gray else Color.Black
                 )
                 ControlIconSmall(
-                    icon = Icons.Rounded.PanTool,
+                    icon = Icons.Rounded.BackHand,
                     onClick = onRaiseHand,
-                    inactiveColor = Color(0xFFF5F5F5)
+                    inactiveColor = Color(0xFFFEF9E7),
+                    iconColor = Color(0xFFBCA136)
                 )
                 ControlIconSmall(
                     icon = Icons.Rounded.Chat,
                     onClick = onChatToggle,
                     badgeCount = unreadCount,
-                    inactiveColor = Color(0xFFF5F5F5)
+                    inactiveColor = Color(0xFFFEF9E7),
+                    iconColor = Color(0xFFBCA136)
                 )
                 ControlIconSmall(
-                    icon = Icons.Rounded.Block, // Changed to match "leave" style in screenshot
+                    icon = Icons.Rounded.Close,
                     onClick = onLeave,
                     iconColor = Color(0xFFE57373),
-                    inactiveColor = Color(0xFFF5F5F5)
+                    inactiveColor = Color(0xFFFFEBEE)
                 )
             }
         }
