@@ -89,52 +89,58 @@ fun VoiceRoomScreen(
 
     Scaffold(
         topBar = {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(top = 16.dp, bottom = 8.dp)
+                    .padding(top = 12.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
             ) {
-                Row(
+                IconButton(
+                    onClick = { navController.popBackStack() },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .size(32.dp)
+                        .background(Color(0xFFF8F8F8), CircleShape)
+                        .align(Alignment.CenterStart)
                 ) {
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(Color(0xFFF5F5F5), CircleShape)
-                    ) {
-                        Icon(
-                            Icons.Rounded.ChevronLeft,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    Icon(
+                        Icons.Rounded.ChevronLeft,
+                        contentDescription = "Back",
+                        modifier = Modifier.size(20.dp),
+                        tint = Color(0xFF666666)
+                    )
+                }
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = room?.title ?: "Voice Room",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
-                            )
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = room?.title ?: "Voice Room",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color.Black
                         )
-                        Text(
-                            text = "#FT-${roomId.takeLast(4)}",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.Gray,
-                                fontSize = 10.sp
-                            )
+                    )
+                    Text(
+                        text = "#FT-${roomId.takeLast(4).uppercase()}",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.LightGray,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Normal
                         )
-                    }
+                    )
+                }
 
-                    IconButton(onClick = { /* Menu */ }) {
-                        Icon(Icons.Default.MoreHoriz, contentDescription = "Menu")
-                    }
+                IconButton(
+                    onClick = { /* Menu */ },
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    Icon(
+                        Icons.Default.MoreHoriz,
+                        contentDescription = "Menu",
+                        tint = Color.Black
+                    )
                 }
             }
         },
@@ -166,26 +172,27 @@ fun VoiceRoomScreen(
                 // Listener Indicator
                 Surface(
                     onClick = { showParticipantsSheet = true },
-                    color = MangoYellow.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFFEF9E7),
+                    shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.wrapContentSize()
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Icon(
                             Icons.Rounded.Groups,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = Color(0xFF8B6B00)
+                            modifier = Modifier.size(14.dp),
+                            tint = Color(0xFFBCA136)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "$listenerCount Listening",
                             style = MaterialTheme.typography.labelMedium.copy(
-                                color = Color(0xFF8B6B00),
-                                fontWeight = FontWeight.Bold
+                                color = Color(0xFFBCA136),
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
                             )
                         )
                     }
@@ -390,40 +397,40 @@ fun ChatPreviewOverlay(messages: List<RoomMessageWithProfile>) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         messages.forEach { message ->
             var visible by remember { mutableStateOf(true) }
 
             LaunchedEffect(message.id) {
-                delay(8000)
+                delay(5000) // Fade after 5 seconds
                 visible = false
             }
 
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { -it })
+                enter = fadeIn(animationSpec = tween(500)) + slideInVertically(),
+                exit = fadeOut(animationSpec = tween(1000))
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    modifier = Modifier.padding(vertical = 1.dp)
                 ) {
                     if (message.profiles.avatar_url != null) {
                         AsyncImage(
                             model = message.profiles.avatar_url,
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp).clip(CircleShape),
+                            modifier = Modifier.size(20.dp).clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
                     } else {
                         Box(
-                            modifier = Modifier.size(24.dp).background(Color(0xFFEEEEEE), CircleShape),
+                            modifier = Modifier.size(20.dp).background(Color(0xFFF0F0F0), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = (message.profiles.username ?: "U").take(1).uppercase(),
-                                fontSize = 10.sp,
+                                fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Gray
                             )
@@ -433,17 +440,21 @@ fun ChatPreviewOverlay(messages: List<RoomMessageWithProfile>) {
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Column {
-                        Text(
-                            text = message.profiles.username ?: "User",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = message.profiles.username ?: "User",
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 11.sp,
+                                color = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
                         Text(
                             text = message.content,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             color = Color.Black,
-                            maxLines = 2,
+                            fontWeight = FontWeight.Normal,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
