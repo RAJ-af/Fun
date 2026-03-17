@@ -160,7 +160,7 @@ fun VoiceRoomScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(100.dp))
 
                 DynamicSpeakerStage(
                     speakers = speakers,
@@ -174,11 +174,14 @@ fun VoiceRoomScreen(
                     onClick = { showParticipantsSheet = true },
                     color = Color(0xFFFEF9E7),
                     shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.wrapContentSize()
+                    modifier = Modifier
+                        .height(38.dp)
+                        .wrapContentWidth()
+                        .shadow(2.dp, RoundedCornerShape(20.dp))
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                         Icon(
                             Icons.Rounded.Groups,
@@ -204,7 +207,7 @@ fun VoiceRoomScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = 40.dp),
+                    .padding(bottom = 24.dp),
                 horizontalAlignment = Alignment.Start
             ) {
                 val currentSpeakerUid = activeSpeakers.firstOrNull()
@@ -257,10 +260,10 @@ fun DynamicSpeakerStage(
         columns = GridCells.Fixed(3),
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp), // Adjusted height to accommodate badges
+            .height(320.dp), // Adjusted height to accommodate badges and more spacing
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
         userScrollEnabled = false
     ) {
         items(6) { index ->
@@ -338,7 +341,7 @@ fun SpeakerAvatarItem(
         }
 
         Text(
-            text = speaker?.profiles?.username ?: "Empty",
+            text = speaker?.profiles?.username ?: "",
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 12.sp,
@@ -437,21 +440,29 @@ fun ModernControlBar(
     val transition = updateTransition(targetState = expanded, label = "ControlsTransition")
 
     val width by transition.animateDp(label = "Width") { state ->
-        if (state) 280.dp else 160.dp
+        if (state) 300.dp else 160.dp
+    }
+
+    val height by transition.animateDp(label = "Height") { state ->
+        if (state) 72.dp else 44.dp
+    }
+
+    val cornerRadius by transition.animateDp(label = "CornerRadius") { state ->
+        if (state) 36.dp else 22.dp
     }
 
     Surface(
         modifier = Modifier
             .width(width)
-            .height(56.dp)
-            .shadow(12.dp, RoundedCornerShape(28.dp))
+            .height(height)
+            .shadow(8.dp, RoundedCornerShape(cornerRadius))
             .draggable(
                 orientation = Orientation.Horizontal,
                 state = rememberDraggableState { delta ->
                     if (delta < -20 && expanded) onToggle()
                 }
             ),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(cornerRadius),
         color = Color.White
     ) {
         if (!expanded) {
@@ -459,7 +470,7 @@ fun ModernControlBar(
                 modifier = Modifier
                     .fillMaxSize()
                     .clickable { onToggle() }
-                    .padding(start = 20.dp, end = 8.dp),
+                    .padding(start = 20.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -477,7 +488,7 @@ fun ModernControlBar(
 
                 Surface(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(36.dp)
                         .clickable { onToggle() },
                     shape = RoundedCornerShape(12.dp),
                     color = MangoYellow
@@ -487,7 +498,7 @@ fun ModernControlBar(
                             Icons.Rounded.ChevronLeft,
                             contentDescription = "Expand",
                             tint = Color.Black,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -496,35 +507,39 @@ fun ModernControlBar(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ControlIconSmall(
                     icon = if (isMuted) Icons.Rounded.MicOff else Icons.Rounded.Mic,
                     onClick = onMuteToggle,
-                    active = true, // Mic is always yellow as per "Mic -> yellow filled circle"
+                    active = true,
                     activeColor = MangoYellow,
-                    iconColor = if (isMuted) Color.Gray else Color.Black
+                    iconColor = if (isMuted) Color.Gray else Color.Black,
+                    size = 56.dp
                 )
                 ControlIconSmall(
                     icon = Icons.Rounded.BackHand,
                     onClick = onRaiseHand,
                     inactiveColor = Color(0xFFFEF9E7),
-                    iconColor = Color(0xFFBCA136)
+                    iconColor = Color(0xFFBCA136),
+                    size = 48.dp
                 )
                 ControlIconSmall(
                     icon = Icons.Rounded.Chat,
                     onClick = onChatToggle,
                     badgeCount = unreadCount,
                     inactiveColor = Color(0xFFFEF9E7),
-                    iconColor = Color(0xFFBCA136)
+                    iconColor = Color(0xFFBCA136),
+                    size = 48.dp
                 )
                 ControlIconSmall(
                     icon = Icons.Rounded.Close,
                     onClick = onLeave,
                     iconColor = Color(0xFFE57373),
-                    inactiveColor = Color(0xFFFFEBEE)
+                    inactiveColor = Color(0xFFFFEBEE),
+                    size = 48.dp
                 )
             }
         }
@@ -539,13 +554,14 @@ fun ControlIconSmall(
     iconColor: Color = Color.Black,
     activeColor: Color = MangoYellow,
     inactiveColor: Color = Color.Transparent,
-    badgeCount: Int = 0
+    badgeCount: Int = 0,
+    size: androidx.compose.ui.unit.Dp = 44.dp
 ) {
     Box(contentAlignment = Alignment.TopEnd) {
         IconButton(
             onClick = onClick,
             modifier = Modifier
-                .size(44.dp)
+                .size(size)
                 .background(if (active) activeColor else inactiveColor, CircleShape)
         ) {
             Icon(
