@@ -272,89 +272,23 @@ fun DynamicSpeakerStage(
     speakers: List<ParticipantWithProfile>,
     activeSpeakers: Set<Int>
 ) {
-    val count = speakers.size
-
-    Box(
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight(),
-        contentAlignment = Alignment.Center
+            .height(280.dp), // Approximate height for 2 rows
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        userScrollEnabled = false
     ) {
-        when {
-            count <= 1 -> {
-                val speaker = speakers.firstOrNull()
-                SpeakerAvatarItem(
-                    speaker = speaker,
-                    size = 140.dp,
-                    isSpeaking = speaker != null && activeSpeakers.contains(speaker.user_id.hashCode())
-                )
-            }
-            count == 2 -> {
-                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    speakers.forEach {
-                        SpeakerAvatarItem(
-                            speaker = it,
-                            size = 100.dp,
-                            isSpeaking = activeSpeakers.contains(it.user_id.hashCode())
-                        )
-                    }
-                }
-            }
-            count in 3..4 -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(32.dp)
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                        speakers.take(2).forEach {
-                            SpeakerAvatarItem(
-                                speaker = it,
-                                size = 90.dp,
-                                isSpeaking = activeSpeakers.contains(it.user_id.hashCode())
-                            )
-                        }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                        speakers.drop(2).take(2).forEach {
-                            SpeakerAvatarItem(
-                                speaker = it,
-                                size = 90.dp,
-                                isSpeaking = activeSpeakers.contains(it.user_id.hashCode())
-                            )
-                        }
-                    }
-                }
-            }
-            else -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                        speakers.take(3).forEach {
-                            SpeakerAvatarItem(
-                                speaker = it,
-                                size = 80.dp,
-                                isSpeaking = activeSpeakers.contains(it.user_id.hashCode())
-                            )
-                        }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                        val remaining = speakers.drop(3).take(3)
-                        remaining.forEach {
-                            SpeakerAvatarItem(
-                                speaker = it,
-                                size = 80.dp,
-                                isSpeaking = activeSpeakers.contains(it.user_id.hashCode())
-                            )
-                        }
-                        // Fill empty slots if < 6
-                        repeat(3 - remaining.size) {
-                            SpeakerAvatarItem(speaker = null, size = 80.dp)
-                        }
-                    }
-                }
-            }
+        items(6) { index ->
+            val speaker = speakers.getOrNull(index)
+            SpeakerAvatarItem(
+                speaker = speaker,
+                size = 76.dp,
+                isSpeaking = speaker != null && activeSpeakers.contains(speaker.user_id.hashCode())
+            )
         }
     }
 }
@@ -368,7 +302,7 @@ fun SpeakerAvatarItem(
     val infiniteTransition = rememberInfiniteTransition()
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.15f,
+        targetValue = 1.1f,
         animationSpec = infiniteRepeatable(
             animation = tween(1000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -377,22 +311,23 @@ fun SpeakerAvatarItem(
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(contentAlignment = Alignment.Center) {
+            // Pulse Effect
             if (isSpeaking) {
                 Box(
                     modifier = Modifier
-                        .size(size)
+                        .size(size + 12.dp)
                         .scale(pulseScale)
-                        .background(MangoYellow.copy(alpha = 0.3f), CircleShape)
+                        .background(MangoYellow.copy(alpha = 0.2f), CircleShape)
                 )
             }
 
-            Box(contentAlignment = Alignment.BottomEnd) {
+            Box(contentAlignment = Alignment.BottomCenter) {
                 Surface(
                     modifier = Modifier
                         .size(size)
                         .border(
-                            width = if (isSpeaking) 3.dp else 0.dp,
-                            color = if (isSpeaking) MangoYellow else Color.Transparent,
+                            width = if (isSpeaking || speaker?.role == "host") 2.dp else 0.dp,
+                            color = if (isSpeaking || speaker?.role == "host") MangoYellow else Color.Transparent,
                             shape = CircleShape
                         ),
                     shape = CircleShape,
@@ -410,7 +345,7 @@ fun SpeakerAvatarItem(
                             Icon(
                                 Icons.Rounded.Person,
                                 contentDescription = null,
-                                modifier = Modifier.size(size / 2),
+                                modifier = Modifier.size(size / 2.5f),
                                 tint = Color.LightGray
                             )
                         }
@@ -422,8 +357,7 @@ fun SpeakerAvatarItem(
                         color = MangoYellow,
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .offset(y = 6.dp)
+                            .offset(y = 8.dp)
                     ) {
                         Text(
                             text = "Host",
@@ -439,9 +373,14 @@ fun SpeakerAvatarItem(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = speaker?.profiles?.username ?: "Empty",
-            fontWeight = FontWeight.Medium,
-            fontSize = 13.sp,
-            color = if (speaker == null) Color.Gray else Color.Black
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                color = if (speaker == null) Color.Gray else Color.Black
+            ),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -567,21 +506,25 @@ fun CollapsibleControlBar(
                     icon = if (isMuted) Icons.Rounded.MicOff else Icons.Rounded.Mic,
                     onClick = onMuteToggle,
                     active = !isMuted,
-                    activeColor = MangoYellow
+                    activeColor = MangoYellow,
+                    inactiveColor = Color(0xFFF5F5F5)
                 )
                 ControlIconSmall(
                     icon = Icons.Rounded.PanTool,
-                    onClick = onRaiseHand
+                    onClick = onRaiseHand,
+                    inactiveColor = Color(0xFFF5F5F5)
                 )
                 ControlIconSmall(
                     icon = Icons.Rounded.Chat,
                     onClick = onChatToggle,
-                    badgeCount = unreadCount
+                    badgeCount = unreadCount,
+                    inactiveColor = Color(0xFFF5F5F5)
                 )
                 ControlIconSmall(
-                    icon = Icons.Rounded.CallEnd,
+                    icon = Icons.Rounded.Block, // Changed to match "leave" style in screenshot
                     onClick = onLeave,
-                    iconColor = Color.Red
+                    iconColor = Color(0xFFE57373),
+                    inactiveColor = Color(0xFFF5F5F5)
                 )
             }
         }
@@ -595,6 +538,7 @@ fun ControlIconSmall(
     active: Boolean = false,
     iconColor: Color = Color.Black,
     activeColor: Color = MangoYellow,
+    inactiveColor: Color = Color.Transparent,
     badgeCount: Int = 0
 ) {
     Box(contentAlignment = Alignment.TopEnd) {
@@ -602,7 +546,7 @@ fun ControlIconSmall(
             onClick = onClick,
             modifier = Modifier
                 .size(44.dp)
-                .background(if (active) activeColor else Color.Transparent, CircleShape)
+                .background(if (active) activeColor else inactiveColor, CircleShape)
         ) {
             Icon(
                 icon,
